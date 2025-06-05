@@ -98,6 +98,7 @@ class _WelcomePageState extends State<WelcomePage> {
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Container(
+            height: 400, // Set a consistent height for all images
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
@@ -109,7 +110,10 @@ class _WelcomePageState extends State<WelcomePage> {
               ],
             ),
             clipBehavior: Clip.antiAlias,
-            child: Image.asset(imagePath, fit: BoxFit.contain),
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain, // Maintain aspect ratio inside fixed height
+            ),
           ),
         ),
       ),
