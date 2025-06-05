@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/welcome_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -84,6 +85,18 @@ class _MyHomePageState extends State<MyHomePage> {
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        actions: [
+          // This icon button does not do anything yet, but you can add an
+          // onPressed callback to it to make it functional.
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed:
+                () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const WelcomePage()),
+                ),
+            tooltip: 'Welcome Page',
+          ),
+        ],
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -116,7 +129,8 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
+      // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
