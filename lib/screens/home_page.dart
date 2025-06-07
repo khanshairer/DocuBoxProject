@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'login_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,7 +18,11 @@ class HomePage extends StatelessWidget {
             tooltip: 'Logout',
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              Navigator.popUntil(context, (route) => route.isFirst);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
             },
           ),
         ],
