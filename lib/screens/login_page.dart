@@ -63,15 +63,44 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const InputDecoration(labelText: 'Password'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _loginWithEmail,
-              child: const Text("Login"),
+            // Email/Password Login Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _loginWithEmail,
+                child: const Text("Login"),
+              ),
             ),
             const SizedBox(height: 10),
+
+            // Google Sign-In Button
             GestureDetector(
               onTap: _loginWithGoogle,
-              child: Image.asset('assets/icons/google_logo.png', height: 48),
+              child: Container(
+                width: double.infinity, // Match width to login button
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 20,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/icons/google_logo.png', height: 24),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Sign in with Google',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
             ),
+
             if (error.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
