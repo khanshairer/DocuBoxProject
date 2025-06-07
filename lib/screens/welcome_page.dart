@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_signup.dart'; // Import your login/signup page
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -69,7 +70,17 @@ class _WelcomePageState extends State<WelcomePage> {
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: ElevatedButton(
-                  onPressed: _nextPage,
+                  onPressed:
+                      _currentPage < 2
+                          ? _nextPage
+                          : () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ),
+                            );
+                          },
+                  // disable when page is >= 2
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.indigo[800],
