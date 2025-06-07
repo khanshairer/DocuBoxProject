@@ -18,10 +18,9 @@ class HomePage extends StatelessWidget {
             tooltip: 'Logout',
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              Navigator.pushAndRemoveUntil(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const LoginPage()),
-                (route) => false,
               );
             },
           ),
