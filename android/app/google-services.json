@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "784534102255",
+    "project_id": "gr05-docubox-2025-inters-1af0a",
+    "storage_bucket": "gr05-docubox-2025-inters-1af0a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:784534102255:android:90b7e8885f19ba20ed7b1a",
+        "android_client_info": {
+          "package_name": "com.example.docubox_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "784534102255-qvapt8h7809um52f2daortahcfjf0sit.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIM3gCz5tk4cab1h4BG2SyNyWmfmPk2xI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "784534102255-qvapt8h7809um52f2daortahcfjf0sit.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
