@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'screens/welcome_page.dart';
+import 'screens/login_page.dart';
 import 'screens/home_page.dart';
 
 void main() async {
@@ -17,14 +18,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DocuBox',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      debugShowCheckedModeBanner: false,
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
+          debugPrint(
+            "authStateChanges => ${snapshot.hasData ? 'Logged in' : 'Logged out'}",
+          );
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
@@ -32,10 +32,10 @@ class MyApp extends StatelessWidget {
           }
 
           if (snapshot.hasData) {
-            return const HomePage();
+            return const HomePage(); // Show HomePage when signed in
           }
 
-          return const WelcomePage();
+          return const LoginPage(); //  Show LoginPage when signed out
         },
       ),
     );
