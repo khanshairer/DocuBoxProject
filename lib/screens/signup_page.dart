@@ -14,18 +14,28 @@ class _SignupPageState extends State<SignupPage> {
   final passwordController = TextEditingController();
   String error = '';
 
+  // Sign up with email and password
+  // Ensure the widget is still mounted before navigating or showing dialogs
+
   Future<void> _signup() async {
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+
+      if (!mounted) return; // ✅ Ensure widget is still in the tree
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      setState(() => error = e.message ?? 'Signup failed');
+      if (mounted) {
+        setState(() => error = e.message ?? 'Signup failed');
+      }
     }
   }
 
+  // sign up with Google
+  // Ensure the widget is still mounted before navigating or showing dialogs
+  // Error handling is done using setState to update the UI with error messages
   Future<void> _signupWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -40,9 +50,13 @@ class _SignupPageState extends State<SignupPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (!mounted) return; // Ensure the widget is still in the tree
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      setState(() => error = e.message ?? 'Google sign-in failed');
+      if (mounted) {
+        setState(() => error = e.message ?? 'Google sign-in failed');
+      }
     }
   }
 
