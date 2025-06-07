@@ -44,7 +44,13 @@ class _SignupPageState extends State<SignupPage> {
               decoration: const InputDecoration(labelText: 'Password'),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _signup, child: const Text("Sign Up")),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _signup,
+                child: const Text("Sign Up"),
+              ),
+            ),
             if (error.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
