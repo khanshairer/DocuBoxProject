@@ -21,6 +21,8 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
+            // Ensure the widget is still mounted before using context
+            // If the widget is not mounted, it means it has been removed from the widget tree, and you should not use context to navigate or show dialogs.
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
               if (!mounted) return; // ✅ safe context usage
