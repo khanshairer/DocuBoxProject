@@ -17,12 +17,16 @@ class _LoginPageState extends State<LoginPage> {
   String error = '';
 
   // login successful, navigate to home page
+  // considering using a mounted option to check if the widget is still in the tree
+  //If the user navigates away or the widget is disposed during the await, using context can crash the app or cause unexpected behavior.
+
   Future<void> _loginWithEmail() async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
@@ -31,6 +35,9 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => error = e.message ?? 'Login failed');
     }
   }
+
+  //First Check Mounted state before using context
+  //If the widget is not mounted, it means it has been removed from the widget tree, and you should not use context to navigate or show dialogs.
 
   Future<void> _loginWithGoogle() async {
     try {
@@ -46,12 +53,16 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (!mounted) return; // ✅ Make sure the widget is still active
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
       );
     } on FirebaseAuthException catch (e) {
-      setState(() => error = e.message ?? 'Google sign-in failed');
+      if (mounted) {
+        setState(() => error = e.message ?? 'Google sign-in failed');
+      }
     }
   }
 
