@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _loginWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return; // user cancelled
+      if (googleUser == null) return; // User canceled
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -46,6 +46,10 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
     } on FirebaseAuthException catch (e) {
       setState(() => error = e.message ?? 'Google sign-in failed');
     }
