@@ -16,11 +16,16 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   String error = '';
 
+  // login successful, navigate to home page
   Future<void> _loginWithEmail() async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() => error = e.message ?? 'Login failed');
