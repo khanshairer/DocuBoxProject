@@ -24,6 +24,7 @@ jobs:
     
     # Use a Linux virtual machine to run this job (free on GitHub)
     runs-on: ubuntu-latest
+    environment: FIREBASE_APP_ID
     
     # List of sequential steps to execute
     steps:
