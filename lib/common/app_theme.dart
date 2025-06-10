@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Define custom color constants for clarity and easy reuse
 final Color kPrimaryBlue900 = const Color.fromARGB(255, 13, 71, 161);
@@ -46,7 +47,7 @@ class AppTheme {
       backgroundColor: kPrimaryBlue900, // Use the defined blue[900]
       foregroundColor: Colors.white, // Set text and icon color to white
       elevation: 4.0, // Define the elevation (shadow) beneath the AppBar
-      titleTextStyle: const TextStyle(
+      titleTextStyle: GoogleFonts.montserrat(
         color: Colors.white, // Ensure title text is white
         fontSize: 20,
         fontWeight: FontWeight.bold,

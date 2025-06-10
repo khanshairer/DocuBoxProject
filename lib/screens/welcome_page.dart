@@ -51,9 +51,9 @@ class _WelcomePageState extends State<WelcomePage> {
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: 300),
                   child: Text(
-                    _currentPage == 1
+                    _currentPage == 0
                         ? "Trusted Space for Confidential Documents!"
-                        : (_currentPage == 2
+                        : (_currentPage == 1
                             ? "Everything you need to manage your files - right at your fingertips"
                             : "Keep your documents neat, editable and fully protected"),
                     style: welcomePageText(),
