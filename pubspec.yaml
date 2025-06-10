@@ -44,7 +44,8 @@ dependencies:
   
   # State management
   flutter_riverpod: ^2.6.1
-  
+  go_router: ^15.1.3
+
   # File handling dependencies
   file_picker: ^5.5.0      # For picking files from device
   permission_handler: ^11.3.1  # For handling file permissions

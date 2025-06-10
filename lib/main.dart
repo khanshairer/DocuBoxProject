@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
-import 'screens/home_page.dart';
-import 'screens/welcome_page.dart';
-import 'providers/auth_state_provider.dart';
+
+// Import your GoRouter provider
+import 'routing/app_router.dart'; // Assuming your router file is in lib/router/app_router.dart
 
 void main() async {
-  // Ensure Flutter binding is initialized
+  // Ensure Flutter binding is initialized before Firebase.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
+  // Initialize Firebase with platform-specific options.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Start the app with ProviderScope for state management
+  // Run the app, wrapped in ProviderScope for Riverpod state management.
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -23,37 +22,24 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the authentication state
-    final authState = ref.watch(authStateProvider);
+    // Obtain the GoRouter instance from the appRouterProvider.
+    // Riverpod will ensure this is properly initialized and updated.
+    final goRouter = ref.watch(appRouterProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'DocuBox',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: authState.when(
-        // If user is logged in, show HomePage; otherwise WelcomePage
-        data: (user) => user != null ? const HomePage() : const WelcomePage(),
+      // Assign the GoRouter's routerConfig to MaterialApp.router
+      routerConfig: goRouter,
 
-        // Show loading indicator while checking auth state
-        loading:
-            () => const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            ),
-
-        // Show error message if something went wrong
-        error:
-            (error, stackTrace) => Scaffold(
-              body: Center(child: Text('Error: ${error.toString()}')),
-            ),
-      ),
-      // Optional: Define routes if you're using navigation
-      routes: {
-        '/home': (context) => const HomePage(),
-        '/welcome': (context) => const WelcomePage(),
-      },
+      // The 'home' and 'routes' properties are no longer needed
+      // because GoRouter handles all navigation.
+      // The redirection logic in app_router.dart will decide
+      // whether to show HomePage or WelcomePage based on auth state.
     );
   }
 }
