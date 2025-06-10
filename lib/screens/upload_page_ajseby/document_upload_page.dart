@@ -3,7 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
-import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart'; // Add this import
 
 class DocumentUploadPage extends StatefulWidget {
@@ -80,7 +80,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
 
   Future<void> _uploadDocument() async {
-    print('🚀 Starting upload process...');
+    debugPrint('🚀 Starting upload process...');
     
     if (!_formKey.currentState!.validate() || 
         (_selectedFile == null && _selectedFileBytes == null)) {
@@ -88,14 +88,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       return;
     }
 
-    print('✅ Form validation passed');
-    print('📱 Platform: ${kIsWeb ? "Web" : "Mobile/Desktop"}');
-    print('📄 File name: $_selectedFileName');
+    debugPrint('✅ Form validation passed');
+    debugPrint('📱 Platform: ${kIsWeb ? "Web" : "Mobile/Desktop"}');
+    debugPrint('📄 File name: $_selectedFileName');
     
     if (kIsWeb) {
-      print('💾 File bytes size: ${_selectedFileBytes?.length ?? 0} bytes');
+      debugPrint('💾 File bytes size: ${_selectedFileBytes?.length ?? 0} bytes');
     } else {
-      print('📁 File path: ${_selectedFile?.path}');
+      debugPrint('📁 File path: ${_selectedFile?.path}');
     }
 
     setState(() {
@@ -108,43 +108,43 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       String fileName = '${timestamp}_$_selectedFileName';
       
-      print('🔄 Generated filename: $fileName');
+      debugPrint('🔄 Generated filename: $fileName');
       
       // Upload file to Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
-      print('📚 Storage reference created: documents/$fileName');
+      debugPrint('📚 Storage reference created: documents/$fileName');
       
       UploadTask uploadTask;
       
       if (kIsWeb && _selectedFileBytes != null) {
-        print('🌐 Using putData for web upload');
+        debugPrint('🌐 Using putData for web upload');
         uploadTask = storageRef.putData(_selectedFileBytes!);
       } else if (_selectedFile != null) {
-        print('📱 Using putFile for mobile upload');
+        debugPrint('📱 Using putFile for mobile upload');
         uploadTask = storageRef.putFile(_selectedFile!);
       } else {
         throw Exception('No file data available');
       }
 
-      print('⏳ Upload task created, starting upload...');
+      debugPrint('⏳ Upload task created, starting upload...');
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        print('📊 Upload progress: ${snapshot.bytesTransferred}/${snapshot.totalBytes}');
+        debugPrint('📊 Upload progress: ${snapshot.bytesTransferred}/${snapshot.totalBytes}');
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
       });
 
-      print('🎯 Waiting for upload completion...');
+      debugPrint('🎯 Waiting for upload completion...');
       final TaskSnapshot taskSnapshot = await uploadTask;
-      print('✅ Upload completed!');
+      debugPrint('✅ Upload completed!');
       
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-      print('🔗 Download URL obtained: $downloadUrl');
+      debugPrint('🔗 Download URL obtained: $downloadUrl');
 
       // Save document metadata to Firestore
-      print('💾 Saving to Firestore...');
+      debugPrint('💾 Saving to Firestore...');
       await FirebaseFirestore.instance.collection('documents').add({
         'name': _nameController.text.trim(),
         'type': _typeController.text.trim(),
@@ -154,13 +154,13 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'uploadedAt': FieldValue.serverTimestamp(),
       });
 
-      print('🎉 Document saved to Firestore successfully!');
+      debugPrint('🎉 Document saved to Firestore successfully!');
       _showSuccessSnackBar('Document uploaded successfully!');
       _clearForm();
       
     } catch (e) {
-      print('❌ Upload error: $e');
-      print('📋 Error type: ${e.runtimeType}');
+      debugPrint('❌ Upload error: $e');
+      debugPrint('📋 Error type: ${e.runtimeType}');
       _showErrorSnackBar('Upload failed: $e');
     } finally {
       setState(() {
