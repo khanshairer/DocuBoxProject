@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart'; // Import your login/signup page
+import 'package:google_fonts/google_fonts.dart';
+
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
