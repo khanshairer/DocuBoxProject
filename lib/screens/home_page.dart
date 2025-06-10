@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_state_provider.dart'; // Import your auth state provider
+import '../widget/homepage_menu_bar_widget.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -33,17 +34,12 @@ class HomePage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Welcome to DocuBox'),
         actions: [
-          // Logout button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              // Call the signOut method on your authNotifier.
-              // This will update the authentication state and trigger GoRouter's redirect.
-              await authNotifier.signOut();
-            },
-          ),
+          // add an inconbutton with notification icon
+          IconButton(onPressed: () {}, icon: Icon(Icons.notifications_active)),
         ],
       ),
+      // calling the homePageMenuBar with two named Parameter
+      drawer: HomePageMenuBar(authNotifier: authNotifier, currentUser: user),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
