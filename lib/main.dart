@@ -29,7 +29,8 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'DocuBox',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(),
+      // CORRECTED: Use your external theme data here
+      theme: AppTheme.lightTheme, // <--- THIS LINE WAS THE ISSUE!
       // Assign the GoRouter's routerConfig to MaterialApp.router
       routerConfig: goRouter,
 
