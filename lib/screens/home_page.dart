@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_state_provider.dart'; // Import your auth state provider
-import 'package:go_router/go_router.dart';
 import '../widget/homepage_menu_bar_widget.dart';
 
 class HomePage extends ConsumerWidget {
