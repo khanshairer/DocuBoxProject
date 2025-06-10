@@ -1,16 +1,58 @@
-# docubox_project
+# 📁 DocuBox
 
-A new Flutter project.
+**DocuBox** is your personal digital vault — store, manage, and share important documents like passports, driver's licenses, and resumes, all in one place. Get expiration alerts, share files securely, and access your documents anytime, anywhere.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Key Features
 
-A few resources to get you started if this is your first Flutter project:
+- ✅ Secure sign-up with email and phone number
+- 📂 Upload and store important documents
+- 🔔 Get notified before document expiration
+- 🔗 Share document links or via email
+- 📱 Cross-platform mobile support
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Tech Stack
+
+- **Frontend:** Flutter (Dart)  
+- **Backend:** Firebase (Auth, Firestore, Storage, Cloud Functions)
+
+---
+
+## 👤 Team
+
+- **Alen**  
+- **Abir Basu**  
+- **Mamun Rashid**  
+- **Sharier Khan**
+
+---
+
+## 📲 App Access
+
+- 📘 **[User Manual](#)**  
+- 🎬 **[Demo App](#)**  
+- 📱 **[Download the App](#)**
+
+### ▶️ Platform Links
+
+- 🟢 **Android**: [Google Play Store](#)  
+- 🍎 **iOS**: [App Store](#)
+
+---
+
+## 🔐 Privacy & Security
+
+Your documents are encrypted and securely stored in Firebase. Sharing is always under your control, ensuring your privacy is protected.
+
+---
+
+## 💬 Feedback
+
+Have suggestions or run into an issue? Please contact us or open a GitHub issue.
+
+---
+
+> **Never lose your important documents again. Let DocuBox keep you organized and ahead of deadlines!**
