@@ -188,7 +188,7 @@ class HomePage extends ConsumerWidget {
                       title: 'My Documents',
                       subtitle: 'View all files',
                       onTap: () {
-                        // TODO: Navigate to documents list
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Documents list coming soon!'),
@@ -205,7 +205,7 @@ class HomePage extends ConsumerWidget {
                       title: 'Recent',
                       subtitle: 'Latest uploads',
                       onTap: () {
-                        // TODO: Navigate to recent documents
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Recent uploads coming soon!'),
