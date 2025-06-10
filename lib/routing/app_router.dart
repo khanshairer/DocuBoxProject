@@ -5,6 +5,8 @@ import '../screens/home_page.dart';
 import '../screens/login_page.dart';
 import '../providers/auth_state_provider.dart'; // This is the updated import
 import '../screens/welcome_page.dart';
+import '../screens/documents_list_page.dart';
+import '../screens/shared_document_page.dart';
 
 // The appRouterProvider is a Riverpod Provider that returns a GoRouter instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -30,8 +32,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/welcome',
-        name: 'welcom',
+        name: 'welcome',
         builder: (context, state) => const WelcomePage(),
+      ),
+      GoRoute(
+        path: '/documents',
+        name: 'documents',
+        builder: (context, state) => const DocumentsListPage(),
+      ),
+      GoRoute(
+        path: '/shared/:shareId',
+        name: 'shared',
+        builder: (context, state) {
+          final shareId = state.pathParameters['shareId']!;
+          return SharedDocumentPage(shareId: shareId);
+        },
       ),
     ],
     redirect: (context, state) {
