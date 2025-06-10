@@ -1,50 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import
 
-class HomePage extends StatefulWidget {
+import '../providers/auth_state_provider.dart'; // Correct import path
+
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
 
-class _HomePageState extends State<HomePage> {
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    return authState.when(
+      data: (user) {
+        if (user == null)
+          return const SizedBox.shrink(); // Will trigger redirect
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Welcome to DocuBox'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              debugPrint("Sign out complete");
-
-              // ✅ Don't navigate — let main.dart StreamBuilder handle it
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('You are logged in!'),
-            const SizedBox(height: 10),
-            if (user != null)
-              Column(
-                children: [
-                  Text('Email: ${user.email ?? 'N/A'}'),
-                  Text('UID: ${user.uid}'),
-                ],
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Welcome to DocuBox'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                },
               ),
-          ],
-        ),
-      ),
+            ],
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('You are logged in!'),
+                const SizedBox(height: 10),
+                Text('Email: ${user.email ?? 'N/A'}'),
+                Text('UID: ${user.uid}'),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
 }
