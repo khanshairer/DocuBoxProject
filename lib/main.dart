@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
+import 'common/app_theme.dart';
 // Import your GoRouter provider
 import 'routing/app_router.dart'; // Assuming your router file is in lib/router/app_router.dart
 
@@ -29,10 +29,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'DocuBox',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: ThemeData(),
       // Assign the GoRouter's routerConfig to MaterialApp.router
       routerConfig: goRouter,
 
