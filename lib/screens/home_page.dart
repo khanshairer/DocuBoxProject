@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Add this import
+import 'package:firebase_auth/firebase_auth.dart';
 
-import '../providers/auth_state_provider.dart'; // Correct import path
+import '../providers/auth_state_provider.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -13,8 +13,9 @@ class HomePage extends ConsumerWidget {
 
     return authState.when(
       data: (user) {
-        if (user == null)
+        if (user == null) {
           return const SizedBox.shrink(); // Will trigger redirect
+        }
 
         return Scaffold(
           appBar: AppBar(
