@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 class DocumentUploadPage extends StatefulWidget {
@@ -23,6 +25,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   String? _selectedFileName;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
+  bool _isDownloadable = true;
+  bool _isScreenshotAllowed = true;
 
   @override
   void dispose() {
@@ -116,6 +120,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
+      // Generate a unique share ID
+      String shareId = _generateShareId();
+      
       // Save document metadata to Firestore
       await FirebaseFirestore.instance.collection('documents').add({
         'name': _nameController.text.trim(),
@@ -123,7 +130,12 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'expiry': _expiryController.text.trim(),
         'fileName': _selectedFileName,
         'downloadUrl': downloadUrl,
+        'userId': FirebaseAuth.instance.currentUser?.uid,
         'uploadedAt': FieldValue.serverTimestamp(),
+        'isDownloadable': _isDownloadable,
+        'isScreenshotAllowed': _isScreenshotAllowed,
+        'shareId': shareId,
+        'isPubliclyShared': false,
       });
 
       _showSuccessSnackBar('Document uploaded successfully!');
@@ -139,6 +151,13 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     }
   }
 
+  String _generateShareId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        16, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+  }
+
   void _clearForm() {
     _nameController.clear();
     _typeController.clear();
@@ -147,6 +166,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       _selectedFile = null;
       _selectedFileBytes = null;
       _selectedFileName = null;
+      _isDownloadable = true;
+      _isScreenshotAllowed = true;
     });
   }
 
@@ -336,6 +357,55 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: Colors.grey.shade600,
                                 ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Sharing Settings Card
+                      Card(
+                        elevation: 4,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sharing Settings',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              // Download Permission
+                              SwitchListTile(
+                                title: const Text('Allow Download'),
+                                subtitle: const Text('Users can download this document'),
+                                value: _isDownloadable,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _isDownloadable = value;
+                                  });
+                                },
+                                activeColor: Colors.blue.shade600,
+                              ),
+                              
+                              // Screenshot Permission
+                              SwitchListTile(
+                                title: const Text('Allow Screenshots'),
+                                subtitle: const Text('Users can take screenshots of this document'),
+                                value: _isScreenshotAllowed,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _isScreenshotAllowed = value;
+                                  });
+                                },
+                                activeColor: Colors.blue.shade600,
                               ),
                             ],
                           ),
