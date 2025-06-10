@@ -1,43 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import 'screens/welcome_page.dart';
-import 'screens/login_page.dart';
+import 'firebase_options.dart';
 import 'screens/home_page.dart';
+import 'screens/welcome_page.dart';
+import 'providers/auth_state_provider.dart';
 
 void main() async {
+  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
+
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Start the app with ProviderScope for state management
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the authentication state
+    final authState = ref.watch(authStateProvider);
+
     return MaterialApp(
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          debugPrint(
-            "authStateChanges => ${snapshot.hasData ? 'Logged in' : 'Logged out'}",
-          );
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          if (snapshot.hasData) {
-            return const HomePage(); // Show HomePage when signed in
-          }
-
-          return const LoginPage(); //  Show LoginPage when signed out
-        },
+      title: 'DocuBox',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      home: authState.when(
+        // If user is logged in, show HomePage; otherwise WelcomePage
+        data: (user) => user != null ? const HomePage() : const WelcomePage(),
+
+        // Show loading indicator while checking auth state
+        loading:
+            () => const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+
+        // Show error message if something went wrong
+        error:
+            (error, stackTrace) => Scaffold(
+              body: Center(child: Text('Error: ${error.toString()}')),
+            ),
+      ),
+      // Optional: Define routes if you're using navigation
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/welcome': (context) => const WelcomePage(),
+      },
     );
   }
 }
