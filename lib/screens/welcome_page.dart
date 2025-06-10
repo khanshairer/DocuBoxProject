@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart'; // Import your login/signup page
-import 'package:google_fonts/google_fonts.dart';
-
+import '../common/text_style.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -45,6 +44,25 @@ class _WelcomePageState extends State<WelcomePage> {
                 ],
               ),
             ),
+            SizedBox(height: 15),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 300),
+                  child: Text(
+                    _currentPage == 1
+                        ? "Trusted Space for Confidential Documents!"
+                        : (_currentPage == 2
+                            ? "Everything you need to manage your files - right at your fingertips"
+                            : "Keep your documents neat, editable and fully protected"),
+                    style: welcomePageText(),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 30),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
@@ -67,6 +85,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 }),
               ),
             ),
+
             SizedBox(
               width: double.infinity,
               child: Padding(
@@ -91,6 +110,7 @@ class _WelcomePageState extends State<WelcomePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+
                   child: Text(
                     _currentPage < 2 ? 'Next' : 'Get Started',
                     style: const TextStyle(fontSize: 16),
