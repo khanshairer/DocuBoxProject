@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_state_provider.dart';
 import 'upload_page_ajseby/document_upload_page.dart'; 
+//import by ajseby
+import '../providers/auth_state_provider.dart'; // Import your auth state provider
+import '../widget/homepage_menu_bar_widget.dart';
+
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -43,16 +47,12 @@ class HomePage extends ConsumerWidget {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              // Call the signOut method on your authNotifier.
-              // This will update the authentication state and trigger GoRouter's redirect.
-              await authNotifier.signOut();
-            },
-          ),
+          // add an inconbutton with notification icon
+          IconButton(onPressed: () {}, icon: Icon(Icons.notifications_active)),
         ],
       ),
+      // calling the homePageMenuBar with two named Parameter
+      drawer: HomePageMenuBar(authNotifier: authNotifier, currentUser: user),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
