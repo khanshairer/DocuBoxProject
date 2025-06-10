@@ -10,8 +10,8 @@ TextStyle welcomePageText() {
     shadows: [
       Shadow(
         blurRadius: 10.0,
-        color: Colors.amber,
-        offset: const Offset(2.0, 2.0),
+        color: Colors.yellow,
+        offset: const Offset(2.5, 2.5),
       ),
     ],
   );

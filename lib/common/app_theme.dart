@@ -65,7 +65,7 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: kPrimaryBlue900, // Background: blue[900]
         foregroundColor: kAccentAmber400, // Text color: amber[400]
-        textStyle: const TextStyle(
+        textStyle: GoogleFonts.montserrat(
           fontWeight: FontWeight.bold, // Text style: bold
           fontSize: 18, // Consistent font size
         ),
