@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import go_router
 import '../providers/auth_state_provider.dart';
-import 'document_upload_page.dart'; // Use the new, direct path
 import '../widget/homepage_menu_bar_widget.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
