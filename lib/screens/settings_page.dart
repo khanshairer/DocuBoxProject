@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/theme_settings_provider.dart'; // Import theme settings provider
+import '../providers/theme_settings_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -8,21 +8,15 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeSettings = ref.watch(
-      themeSettingsProvider,
-    ); // Watch for theme state
-    final themeNotifier = ref.read(
-      themeSettingsProvider.notifier,
-    ); // Access notifier methods
+    final themeSettings = ref.watch(themeSettingsProvider);
+    final themeNotifier = ref.read(themeSettingsProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
         actions: [
           IconButton(
-            onPressed: () {
-              context.go('/');
-            },
+            onPressed: () => context.go('/'),
             icon: const Icon(Icons.home),
           ),
         ],
@@ -30,7 +24,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Theme Mode Toggle
+          // Theme Mode Toggle (Modified for default light theme)
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -47,25 +41,20 @@ class SettingsPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Light Theme'),
-                      Switch(
-                        value: themeSettings.themeMode == ThemeMode.dark,
-                        onChanged: (bool value) {
-                          themeNotifier.setThemeMode(
-                            value ? ThemeMode.dark : ThemeMode.light,
-                          );
-                        },
-                        activeColor: Theme.of(context).colorScheme.primary,
-                      ),
-                      const Text('Dark Theme'),
-                    ],
+                  // Changed to simple dark mode toggle switch
+                  SwitchListTile(
+                    title: const Text('Dark Mode'),
+                    value: themeSettings.themeMode == ThemeMode.dark,
+                    onChanged: (bool value) {
+                      themeNotifier.setThemeMode(
+                        value ? ThemeMode.dark : ThemeMode.light,
+                      );
+                    },
+                    activeColor: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Current: ${themeSettings.themeMode == ThemeMode.light ? 'Light' : 'Dark'}',
+                    'Current: ${themeSettings.themeMode == ThemeMode.light ? 'Light (Default)' : 'Dark'}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -73,7 +62,7 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
 
-          // Brightness Slider
+          // Rest of the settings remain exactly the same...
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -92,8 +81,8 @@ class SettingsPage extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Slider(
                     value: themeSettings.brightnessFactor,
-                    min: 0.5, // Minimum brightness (50%)
-                    max: 1.5, // Maximum brightness (150%)
+                    min: 0.5,
+                    max: 1.5,
                     divisions: 10,
                     label: '${(themeSettings.brightnessFactor * 100).round()}%',
                     onChanged: (double value) {
@@ -115,7 +104,6 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
 
-          // Font Size Adjustment
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -141,10 +129,7 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       Text(
                         '${(themeSettings.fontSizeFactor * 100).round()}%',
-                        style:
-                            Theme.of(context)
-                                .textTheme
-                                .headlineSmall, // Use a headline style for prominence
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       ElevatedButton(
                         onPressed: themeNotifier.increaseFontSize,
@@ -165,7 +150,6 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
 
-          // Example of other settings (add more as needed)
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -176,14 +160,11 @@ class SettingsPage extends ConsumerWidget {
               leading: const Icon(Icons.notifications),
               title: const Text('Notification Settings'),
               trailing: Switch(
-                value: true, // Example value
-                onChanged: (bool value) {
-                  // Implement notification toggle logic
-                },
+                value: true,
+                onChanged: (bool value) {},
                 activeColor: Theme.of(context).colorScheme.primary,
               ),
               onTap: () {
-                // Navigate to a more detailed notification settings page
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Go to detailed notification settings'),
