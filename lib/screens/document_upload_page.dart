@@ -483,9 +483,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(

@@ -4,6 +4,7 @@ import '../providers/auth_state_provider.dart';
 import '../widget/homepage_menu_bar_widget.dart';
 import '../providers/documents_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/document_card.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -32,15 +33,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     final authNotifier = ref.watch(authStateProvider);
     final user = authNotifier.currentUser;
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
@@ -51,11 +49,14 @@ class _HomePageState extends ConsumerState<HomePage> {
             },
             icon: const Icon(Icons.add),
           ),
-          IconButton(onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Notifications coming soon!')),
-            );
-          }, icon: const Icon(Icons.notifications_active)),
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notifications coming soon!')),
+              );
+            },
+            icon: const Icon(Icons.notifications_active),
+          ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 10),
@@ -69,15 +70,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               decoration: InputDecoration(
                 hintText: 'Search documents...',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white70),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(searchQueryProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
+                suffixIcon:
+                    _searchController.text.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white70),
+                          onPressed: () {
+                            _searchController.clear();
+                            ref.read(searchQueryProvider.notifier).state = '';
+                          },
+                        )
+                        : null,
                 filled: true,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
@@ -120,7 +122,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-      onPressed: () {context.go('/upload-document')},
+        onPressed: () {
+          context.go('/upload-document');
+        },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         child: const Icon(Icons.add),
@@ -153,7 +157,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 30),
-            
           ],
         ),
       ),
@@ -190,4 +193,3 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 }
-
