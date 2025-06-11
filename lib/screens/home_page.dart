@@ -31,9 +31,8 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Welcome to DocuBox'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
+        title: const Text('DocuBox'),
+
         actions: [
           // upload Document
           IconButton(
