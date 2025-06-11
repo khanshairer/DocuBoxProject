@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_state_provider.dart';
 //import by ajseby
 import '../widget/homepage_menu_bar_widget.dart';
+import 'package:go_router/go_router.dart';
 
 
 class HomePage extends ConsumerWidget {
@@ -38,6 +39,10 @@ class HomePage extends ConsumerWidget {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          // upload Document
+          IconButton(onPressed: (){
+            context.go('/document-upload');
+          }, icon: Icon(Icons.upload)),
           // add an inconbutton with notification icon
           IconButton(onPressed: () {}, icon: Icon(Icons.notifications_active)),
         ],
