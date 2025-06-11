@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // Import go_router
 import '../providers/auth_state_provider.dart';
-// Note: Adjusted import path for document_upload_page.dart as it's now in lib/screens/
-import 'document_upload_page.dart';
+import 'document_upload_page.dart'; // Use the new, direct path
 import '../widget/homepage_menu_bar_widget.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
@@ -34,12 +34,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
+  // UPDATED: Use context.push() for GoRouter managed navigation
   void _navigateToUpload(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const DocumentUploadPage(),
-      ),
-    );
+    context.push('/document-upload'); // Use the named route path
   }
 
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import for User type
-import '../providers/auth_state_provider.dart'; // Import your auth state notifier
+import 'package:firebase_auth/firebase_auth.dart';
+import '../providers/auth_state_provider.dart';
 
 /// A custom Drawer widget for the HomePage menu.
 ///
@@ -22,15 +22,11 @@ class HomePageMenuBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
-        padding: EdgeInsets.zero, // Remove default ListView padding
+        padding: EdgeInsets.zero,
         children: <Widget>[
-          // Drawer header, typically showing user info
           DrawerHeader(
             decoration: BoxDecoration(
-              color:
-                  Theme.of(
-                    context,
-                  ).colorScheme.primary, // Use primary theme color
+              color: Theme.of(context).colorScheme.primary,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,15 +38,12 @@ class HomePageMenuBar extends StatelessWidget {
                   child: Icon(
                     Icons.person,
                     size: 30,
-                    color:
-                        Colors
-                            .blue, // Using a fixed blue for the icon, or Theme.of(context).colorScheme.primary
+                    color: Colors.blue,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  currentUser?.email ??
-                      'Logged In User', // Use passed currentUser
+                  currentUser?.email ?? 'Logged In User',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -66,16 +59,25 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Home'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/'); // Navigate to Home
+              context.go('/'); // Navigate to Home (root path)
             },
           ),
-          //upload option
+          // My Documents option - will navigate to the HomePage which has search
           ListTile(
-            leading: const Icon(Icons.mark_email_read),
+            leading: const Icon(Icons.folder_outlined),
+            title: const Text('My Documents'),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              context.go('/'); // Navigate to Home (root path which is 'My Documents' now)
+            },
+          ),
+          // Upload Document option
+          ListTile(
+            leading: const Icon(Icons.upload_file),
             title: const Text('Upload Document'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/document-upload'); // Navigate to Home
+              context.push('/document-upload'); // Use context.push for the upload page
             },
           ),
           // Profile option
@@ -84,7 +86,7 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/profile'); // Navigate to Profile
+              context.push('/profile'); // Use context.push for profile
             },
           ),
           // Settings option
@@ -93,7 +95,7 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Settings'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/settings'); // Navigate to Settings
+              context.push('/settings'); // Use context.push for settings
             },
           ),
           // Chat option
@@ -102,19 +104,17 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Chat'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/chat'); // Navigate to Chat
+              context.push('/chat'); // Use context.push for chat
             },
           ),
-          const Divider(), // A visual divider
+          const Divider(),
           // Logout option
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
-              Navigator.pop(context); // Close the drawer
-              await authNotifier
-                  .signOut(); // Use passed authNotifier for logout
-              // GoRouter's redirect will handle navigation to login page
+              Navigator.pop(context);
+              await authNotifier.signOut();
             },
           ),
         ],

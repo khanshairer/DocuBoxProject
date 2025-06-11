@@ -1,22 +1,20 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart'; // Ensure Material.dart is imported for Scaffold
 
 import '../screens/home_page.dart';
 import '../screens/login_page.dart';
-import '../providers/auth_state_provider.dart'; // This is the updated import
+import '../providers/auth_state_provider.dart';
 import '../screens/welcome_page.dart';
 import '../screens/document_upload_page.dart';
+import '../screens/profile_page.dart'; 
 
 // The appRouterProvider is a Riverpod Provider that returns a GoRouter instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
-  // We watch the authStateProvider which now provides our FirebaseAuthStateNotifier.
-  // Since FirebaseAuthStateNotifier extends ChangeNotifier, it is a Listenable.
   final authNotifier = ref.watch(authStateProvider);
 
   return GoRouter(
     initialLocation: '/',
-    // Pass the authNotifier directly as the refreshListenable.
-    // GoRouter will automatically re-evaluate redirects when authNotifier calls notifyListeners().
     refreshListenable: authNotifier,
     routes: [
       GoRoute(
@@ -31,7 +29,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/welcome',
-        name: 'welcom',
+        name: 'welcome',
         builder: (context, state) => const WelcomePage(),
       ),
       GoRoute(
@@ -39,17 +37,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'document-upload',
         builder: (context, state) => const DocumentUploadPage(),
       ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => Scaffold( 
+          appBar: AppBar(title: const Text('Settings')),
+          body: const Center(child: Text('Settings Page Placeholder')),
+        ),
+      ),
+      GoRoute(
+        path: '/chat',
+        name: 'chat',
+        builder: (context, state) => Scaffold( 
+          appBar: AppBar(title: const Text('Chat')),
+          body: const Center(child: Text('Chat Page Placeholder')),
+        ),
+      ),
     ],
     redirect: (context, state) {
-      // Use the currentUser from the authNotifier to determine login status.
       final bool loggedIn = authNotifier.currentUser != null;
-      // Check if the current location being navigated to is the login page.
-      final bool loggingIn = state.matchedLocation == '/login';
+      
+      // List of routes that do NOT require authentication
+      const List<String> publicRoutes = ['/welcome', '/login'];
 
-      // If not logged in and not trying to log in, redirect to login.
-      if (!loggedIn && !loggingIn) return '/welcome';
-      // If logged in and trying to access login, redirect to home.
-      if (loggedIn && loggingIn) return '/';
+      // Check if the current location is one of the public routes
+      final bool isPublicRoute = publicRoutes.contains(state.matchedLocation);
+
+      // If not logged in AND trying to access a protected route (not a public route), redirect to /welcome
+      if (!loggedIn && !isPublicRoute) return '/welcome';
+      
+      // If logged in AND trying to access a public route, redirect to home
+      if (loggedIn && isPublicRoute) return '/';
+      
       // Otherwise, no redirect needed.
       return null;
     },
