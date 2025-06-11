@@ -5,9 +5,6 @@ import '../providers/auth_state_provider.dart';
 import '../widget/homepage_menu_bar_widget.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
-import '../models/document.dart';
-import '../providers/documents_provider.dart';
-import '../widgets/share_settings_modal.dart';
 import 'package:go_router/go_router.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -80,7 +77,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 suffixIcon:
                     _searchController.text.isNotEmpty
                         ? IconButton(
-                          icon: const Icon(Icons.clear, color: Colors.white70),
+                          icon: const Icon(Icons.clear),
                           onPressed: () {
                             _searchController.clear();
                             ref.read(searchQueryProvider.notifier).state = '';
@@ -97,7 +94,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.white24,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: BorderSide.none,
@@ -106,12 +102,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                   vertical: 0,
                   horizontal: 16,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 hintStyle: const TextStyle(color: Colors.white70),
                 labelStyle: const TextStyle(color: Colors.white),
               ),
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              cursorColor: Colors.white,
+              cursorColor: Colors.blue[900],
             ),
           ),
         ),
@@ -165,7 +159,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
-              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -175,21 +168,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () {context.go('/upload-document')},
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Upload Document'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+            
           ],
         ),
       ),
@@ -261,7 +240,7 @@ class DocumentCard extends StatelessWidget {
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
-                  Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
+                  Icon(icon:Icons.description,),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
