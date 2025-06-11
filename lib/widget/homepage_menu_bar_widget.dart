@@ -74,7 +74,6 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.mark_email_read),
             title: const Text('Upload Document'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
               context.go('/document-upload'); // Navigate to Home
             },
           ),
@@ -84,7 +83,7 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/profile'); // Navigate to Profile
+              context.go('/profile-page'); // Navigate to Profile
             },
           ),
           // Shared Documents option
