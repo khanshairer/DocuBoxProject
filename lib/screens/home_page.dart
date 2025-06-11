@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_state_provider.dart';
-import 'upload_page_ajseby/document_upload_page.dart'; 
 //import by ajseby
 import '../providers/auth_state_provider.dart'; // Import your auth state provider
 import '../widget/homepage_menu_bar_widget.dart';
