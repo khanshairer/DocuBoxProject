@@ -11,7 +11,7 @@ on:
   pull_request:
     branches:
       - main
-    types: [closed]  # Only trigger when PR is closed, not opened/updated
+    types: [closed] # Only trigger when PR is closed, not opened/updated
 
 # Define the actual work to be done
 jobs:
@@ -30,34 +30,43 @@ jobs:
     steps:
     # Step 1: Download your code from the repository
     - name: Checkout code
-      uses: actions/checkout@v4  # This is a pre-built action from GitHub
-    
+      uses: actions/checkout@v4 # This is a pre-built action from GitHub
+      
     # Step 2: Install Java 17 (required for Android app building)
     - name: Set up Java
-      uses: actions/setup-java@v4  # Another pre-built action
+      uses: actions/setup-java@v4 # Another pre-built action
       with:
-        distribution: 'zulu'  # Which Java distribution to use
-        java-version: '17'    # Android requires Java 17 for newer builds
-    
+        distribution: 'zulu' # Which Java distribution to use
+        java-version: '17' # Android requires Java 17 for newer builds
+        
+    # **NEW STEP: Accept Android SDK Licenses**
+    - name: Accept Android SDK Licenses
+      run: yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+
+    # **NEW STEP: Install NDK (if not already present)**
+    # Replace '29.0.13113456' with the exact NDK version required if it changes.
+    - name: Install NDK
+      run: $ANDROID_HOME/tools/bin/sdkmanager "ndk;29.0.13113456"
+
     # Step 3: Install Flutter SDK on the virtual machine
     - name: Set up Flutter
-      uses: subosito/flutter-action@v2  # Community-created action for Flutter
+      uses: subosito/flutter-action@v2 # Community-created action for Flutter
       with:
-        channel: 'stable'  # Use the stable release channel (not beta/dev)
-    
+        channel: 'stable' # Use the stable release channel (not beta/dev)
+        
     # Step 4: Download all the dependencies your Flutter app needs
     - name: Install Flutter dependencies
-      run: flutter pub get  # Same command you run locally
-    
+      run: flutter pub get # Same command you run locally
+      
     # Step 5: Build the actual Android APK file
     - name: Build Android Release APK
-      run: flutter build apk --release  # Creates the installable .apk file
+      run: flutter build apk --release # Creates the installable .apk file
       # This APK gets saved to: build/app/outputs/flutter-apk/app-release.apk
-    
+      
     # Step 6: Install Firebase command-line tools
     - name: Set up Firebase CLI
-      run: npm install -g firebase-tools  # Install globally using npm
-    
+      run: npm install -g firebase-tools # Install globally using npm
+      
     # Step 7: Upload the built APK to Firebase App Distribution
     - name: Distribute to Firebase App Distribution
       run: |
@@ -82,6 +91,8 @@ jobs:
 # 2. GitHub spins up a Linux computer in the cloud
 # 3. Downloads your code
 # 4. Installs Java and Flutter
+# **NEW: Accepts Android SDK Licenses**
+# **NEW: Installs NDK**
 # 5. Downloads your app's dependencies
 # 6. Builds your Flutter app into an Android APK
 # 7. Installs Firebase tools
