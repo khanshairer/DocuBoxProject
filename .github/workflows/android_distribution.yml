@@ -39,14 +39,16 @@ jobs:
         distribution: 'zulu' # Which Java distribution to use
         java-version: '17' # Android requires Java 17 for newer builds
         
-    # **NEW STEP: Accept Android SDK Licenses**
+    # **UPDATED STEP: Accept Android SDK Licenses**
+    # Corrected path for sdkmanager
     - name: Accept Android SDK Licenses
-      run: yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+      run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-    # **NEW STEP: Install NDK (if not already present)**
+    # **UPDATED STEP: Install NDK (if not already present)**
+    # Corrected path for sdkmanager
     # Replace '29.0.13113456' with the exact NDK version required if it changes.
     - name: Install NDK
-      run: $ANDROID_HOME/tools/bin/sdkmanager "ndk;29.0.13113456"
+      run: $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;29.0.13113456"
 
     # Step 3: Install Flutter SDK on the virtual machine
     - name: Set up Flutter
@@ -91,8 +93,8 @@ jobs:
 # 2. GitHub spins up a Linux computer in the cloud
 # 3. Downloads your code
 # 4. Installs Java and Flutter
-# **NEW: Accepts Android SDK Licenses**
-# **NEW: Installs NDK**
+# **UPDATED: Accepts Android SDK Licenses (using new sdkmanager path)**
+# **UPDATED: Installs NDK (using new sdkmanager path)**
 # 5. Downloads your app's dependencies
 # 6. Builds your Flutter app into an Android APK
 # 7. Installs Firebase tools
