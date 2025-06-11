@@ -5,6 +5,7 @@ import 'upload_page_ajseby/document_upload_page.dart';
 import '../widget/homepage_menu_bar_widget.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
+import '../widgets/share_settings_modal.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -260,17 +261,29 @@ class DocumentCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: TextButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Viewing ${document.name} coming soon!')),
-                    );
-                  },
-                  icon: const Icon(Icons.visibility),
-                  label: const Text('View Document'),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => ShareSettingsModal(document: document),
+                      );
+                    },
+                    icon: const Icon(Icons.share_outlined),
+                    label: const Text('Share Settings'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Viewing ${document.name} coming soon!')),
+                      );
+                    },
+                    icon: const Icon(Icons.visibility),
+                    label: const Text('View Document'),
+                  ),
+                ],
               ),
             ],
           ),

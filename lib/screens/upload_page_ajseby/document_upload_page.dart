@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../../widgets/user_selector_modal.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -23,6 +24,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   bool _isDownloadable = true;
   bool _isScreenshotAllowed = true;
   bool _isPubliclyShared = false;
+  List<String> _sharedWith = [];
 
   File? _selectedFile;
   Uint8List? _selectedFileBytes;
@@ -153,6 +155,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'isScreenshotAllowed': _isScreenshotAllowed,
         'isPubliclyShared': _isPubliclyShared,
         'shareId': null,
+        'sharedWith': _sharedWith,
       });
 
       _showSuccessSnackBar('Document uploaded successfully!');
@@ -180,6 +183,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       _isDownloadable = true;
       _isScreenshotAllowed = true;
       _isPubliclyShared = false;
+      _sharedWith = [];
     });
   }
 
@@ -364,6 +368,29 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 },
                                 secondary: const Icon(Icons.public),
                                 controlAffinity: ListTileControlAffinity.leading,
+                              ),
+                              const Divider(),
+                              
+                              ListTile(
+                                leading: const Icon(Icons.people),
+                                title: const Text('Share with Users'),
+                                subtitle: Text(_sharedWith.isEmpty 
+                                    ? 'No users selected' 
+                                    : '${_sharedWith.length} user${_sharedWith.length == 1 ? '' : 's'} selected'),
+                                trailing: const Icon(Icons.arrow_forward_ios),
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => UserSelectorModal(
+                                      initialSelectedUserIds: _sharedWith,
+                                      onSelectionChanged: (selectedUserIds) {
+                                        setState(() {
+                                          _sharedWith = selectedUserIds;
+                                        });
+                                      },
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
