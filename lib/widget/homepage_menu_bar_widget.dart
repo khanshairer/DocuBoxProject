@@ -84,7 +84,7 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/profile'); // Navigate to Profile
+              context.go('/profile-page'); // Navigate to Profile
             },
           ),
           // Shared Documents option

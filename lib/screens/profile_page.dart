@@ -10,9 +10,15 @@ class ProfilePage extends StatelessWidget {
         title: const Text('Profile'), // Optional: Add an app bar
       ),
       body: const Center(
-        child: Text(
-          'Welcome to your Profile!',
-        ), // Your profile content goes here
+        child: Column(
+          children: [
+            CircleAvatar(
+              backgroundImage: AssetImage(
+                'assets/iicnos/default_profile_icon.png',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
