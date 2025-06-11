@@ -10,7 +10,8 @@ class SharedDocumentViewerPage extends StatefulWidget {
   const SharedDocumentViewerPage({super.key, required this.document});
 
   @override
-  State<SharedDocumentViewerPage> createState() => _SharedDocumentViewerPageState();
+  State<SharedDocumentViewerPage> createState() =>
+      _SharedDocumentViewerPageState();
 }
 
 class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
@@ -93,38 +94,54 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                   color: Colors.grey.shade100,
                 ),
                 loadingBuilder: (context, event) {
-                  return Container(
+                  return SizedBox(
                     height: 400,
                     child: Center(
                       child: CircularProgressIndicator(
-                        value: event == null
-                            ? 0
-                            : event.cumulativeBytesLoaded / (event.expectedTotalBytes ?? 1),
+                        value:
+                            event == null
+                                ? 0
+                                : event.cumulativeBytesLoaded /
+                                    (event.expectedTotalBytes ?? 1),
                       ),
                     ),
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
-                  return Container(
+                  return SizedBox(
                     height: 400,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error, size: 64, color: Colors.red.shade400),
+                          Icon(
+                            Icons.error,
+                            size: 64,
+                            color: Colors.red.shade400,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Failed to load image',
-                            style: TextStyle(fontSize: 16, color: Colors.red.shade600),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.red.shade600,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           ElevatedButton.icon(
                             onPressed: () async {
-                              final scaffoldMessenger = ScaffoldMessenger.of(context);
+                              final scaffoldMessenger = ScaffoldMessenger.of(
+                                context,
+                              );
                               try {
-                                final Uri url = Uri.parse(widget.document.downloadUrl);
+                                final Uri url = Uri.parse(
+                                  widget.document.downloadUrl,
+                                );
                                 if (await canLaunchUrl(url)) {
-                                  await launchUrl(url, mode: LaunchMode.inAppBrowserView);
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.inAppBrowserView,
+                                  );
                                 } else {
                                   throw 'Could not launch $url';
                                 }
@@ -132,7 +149,9 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                                 if (mounted) {
                                   scaffoldMessenger.showSnackBar(
                                     SnackBar(
-                                      content: Text('Error opening document: $e'),
+                                      content: Text(
+                                        'Error opening document: $e',
+                                      ),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -175,10 +194,7 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                 ),
                 child: const Text(
                   'Pinch to zoom • Tap fullscreen for better view',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ),
             ),
@@ -272,10 +288,14 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
   void _openFullscreenImage() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => FullscreenImageViewer(
-          imageUrl: widget.document.downloadUrl,
-          title: widget.document.name.isNotEmpty ? widget.document.name : 'Image',
-        ),
+        builder:
+            (context) => FullscreenImageViewer(
+              imageUrl: widget.document.downloadUrl,
+              title:
+                  widget.document.name.isNotEmpty
+                      ? widget.document.name
+                      : 'Image',
+            ),
       ),
     );
   }
@@ -307,7 +327,11 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.document.name.isNotEmpty ? widget.document.name : 'Shared Document'),
+        title: Text(
+          widget.document.name.isNotEmpty
+              ? widget.document.name
+              : 'Shared Document',
+        ),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         elevation: 2,
@@ -333,7 +357,9 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
             // Document Info Card
             Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -341,19 +367,43 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                        Icon(
+                          Icons.info_outline,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Document Information',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildInfoRow('Name', widget.document.name.isNotEmpty ? widget.document.name : 'Untitled'),
-                    _buildInfoRow('Type', widget.document.type.isNotEmpty ? widget.document.type : 'N/A'),
-                    _buildInfoRow('File Name', widget.document.fileName.isNotEmpty ? widget.document.fileName : 'N/A'),
-                    _buildInfoRow('Expires', '${widget.document.expiryDate.day.toString().padLeft(2, '0')}/${widget.document.expiryDate.month.toString().padLeft(2, '0')}/${widget.document.expiryDate.year}'),
+                    _buildInfoRow(
+                      'Name',
+                      widget.document.name.isNotEmpty
+                          ? widget.document.name
+                          : 'Untitled',
+                    ),
+                    _buildInfoRow(
+                      'Type',
+                      widget.document.type.isNotEmpty
+                          ? widget.document.type
+                          : 'N/A',
+                    ),
+                    _buildInfoRow(
+                      'File Name',
+                      widget.document.fileName.isNotEmpty
+                          ? widget.document.fileName
+                          : 'N/A',
+                    ),
+                    _buildInfoRow(
+                      'Expires',
+                      '${widget.document.expiryDate.day.toString().padLeft(2, '0')}/${widget.document.expiryDate.month.toString().padLeft(2, '0')}/${widget.document.expiryDate.year}',
+                    ),
                     if (widget.document.tags.isNotEmpty)
                       _buildInfoRow('Tags', widget.document.tags.join(', ')),
                   ],
@@ -361,11 +411,13 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Sharing Restrictions Card
             Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -373,11 +425,17 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.security, color: Theme.of(context).colorScheme.primary),
+                        Icon(
+                          Icons.security,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Sharing Restrictions',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -385,23 +443,29 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                     _buildRestrictionRow(
                       'Download',
                       widget.document.isDownloadable,
-                      widget.document.isDownloadable ? 'Allowed' : 'Not Allowed',
+                      widget.document.isDownloadable
+                          ? 'Allowed'
+                          : 'Not Allowed',
                     ),
                     _buildRestrictionRow(
                       'Screenshots',
                       widget.document.isScreenshotAllowed,
-                      widget.document.isScreenshotAllowed ? 'Allowed' : 'Not Allowed',
+                      widget.document.isScreenshotAllowed
+                          ? 'Allowed'
+                          : 'Not Allowed',
                     ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Document Viewer Card
             Card(
               elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -409,11 +473,17 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.visibility, color: Theme.of(context).colorScheme.primary),
+                        Icon(
+                          Icons.visibility,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Document Viewer',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -423,7 +493,7 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
                 ),
               ),
             ),
-            
+
             if (!widget.document.isScreenshotAllowed)
               Container(
                 margin: const EdgeInsets.only(top: 16),
@@ -469,10 +539,7 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
+            child: Text(value, style: TextStyle(color: Colors.grey.shade700)),
           ),
         ],
       ),
@@ -535,14 +602,10 @@ class FullscreenImageViewer extends StatelessWidget {
         minScale: PhotoViewComputedScale.contained,
         maxScale: PhotoViewComputedScale.covered * 5.0,
         initialScale: PhotoViewComputedScale.contained,
-        backgroundDecoration: const BoxDecoration(
-          color: Colors.black,
-        ),
+        backgroundDecoration: const BoxDecoration(color: Colors.black),
         loadingBuilder: (context, event) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: Colors.white,
-            ),
+            child: CircularProgressIndicator(color: Colors.white),
           );
         },
         errorBuilder: (context, error, stackTrace) {
