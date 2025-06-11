@@ -25,7 +25,6 @@ class FirebaseAuthStateNotifier extends ChangeNotifier {
           await UserService.addCurrentUserToCollection();
         } catch (e) {
           // Log error but don't prevent authentication
-          print('Error adding user to collection: $e');
         }
       }
       
