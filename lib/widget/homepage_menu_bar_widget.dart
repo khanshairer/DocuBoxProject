@@ -71,7 +71,7 @@ class HomePageMenuBar extends StatelessWidget {
           ),
           //upload option
           ListTile(
-            leading: const Icon(Icons.home),
+            leading: const Icon(Icons.mark_email_read),
             title: const Text('Upload Document'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
