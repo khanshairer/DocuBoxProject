@@ -27,6 +27,11 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   bool _isPubliclyShared = false;
   List<String> _sharedWith = [];
 
+  
+  bool _isDownloadable = true;
+  bool _isScreenshotAllowed = true;
+  bool _isPubliclyShared = false;
+
   File? _selectedFile;
   Uint8List? _selectedFileBytes;
   String? _selectedFileName;
@@ -52,7 +57,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       if (result != null) {
         setState(() {
           _selectedFileName = result.files.single.name;
-
+          
           if (kIsWeb) {
             _selectedFileBytes = result.files.single.bytes;
             _selectedFile = null;
@@ -76,17 +81,18 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-
+    
     if (picked != null) {
       setState(() {
         _expiryController.text =
             '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+        _expiryController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }
 
   Future<void> _uploadDocument() async {
-    if (!_formKey.currentState!.validate() ||
+    if (!_formKey.currentState!.validate() || 
         (_selectedFile == null && _selectedFileBytes == null)) {
       _showErrorSnackBar('Please fill all fields and select a file.');
       return;
@@ -133,8 +139,27 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'user_documents/${user.uid}/$storageFileName',
       );
 
-      UploadTask uploadTask;
+      DateTime parsedExpiryDate;
+      try {
+        final parts = _expiryController.text.trim().split('/');
+        parsedExpiryDate = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      } catch (e) {
+        _showErrorSnackBar('Invalid expiry date format. Please use DD/MM/YYYY.');
+        return;
+      }
 
+      String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      String safeFileName = _selectedFileName ?? 'unknown_file'; 
+      String storageFileName = '${user.uid}_${timestamp}_$safeFileName';
+
+      final storageRef = FirebaseStorage.instance.ref().child('user_documents/${user.uid}/$storageFileName');
+      
+      UploadTask uploadTask;
+      
       if (kIsWeb && _selectedFileBytes != null) {
         uploadTask = storageRef.putData(_selectedFileBytes!);
       } else if (_selectedFile != null) {
@@ -160,6 +185,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
               .where((tag) => tag.isNotEmpty)
               .toList();
 
+      List<String> tagsList = _tagsController.text.trim().split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
+
       await FirebaseFirestore.instance.collection('documents').add({
         'userId': user.uid,
         'name': _nameController.text.trim(),
@@ -178,6 +205,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
       _showSuccessSnackBar('Document uploaded successfully!');
       _clearForm();
+      
     } catch (e) {
       _showErrorSnackBar('Upload failed: ${e.toString()}');
     } finally {
@@ -231,12 +259,16 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Upload Document'),
+        backgroundColor: Colors.blue.shade700,
+        foregroundColor: Colors.white,
+        elevation: 2,
         actions: [
           IconButton(
             onPressed: () {
-              context.go('/');
+              // Assuming you want to go back to the home page after upload
+              Navigator.of(context).pop(); // Go back to the previous screen (HomePage)
             },
-            icon: Icon(Icons.home),
+            icon: const Icon(Icons.home),
           ),
         ],
       ),
@@ -256,6 +288,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -263,15 +297,15 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                             children: [
                               Text(
                                 'Document Information',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineSmall?.copyWith(
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue.shade700,
                                 ),
                               ),
                               const SizedBox(height: 20),
 
+
+                              
                               TextFormField(
                                 controller: _nameController,
                                 decoration: const InputDecoration(
@@ -288,14 +322,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 16),
 
+                              
                               TextFormField(
                                 controller: _typeController,
                                 decoration: const InputDecoration(
                                   labelText: 'Type',
                                   border: OutlineInputBorder(),
                                   prefixIcon: Icon(Icons.category),
-                                  hintText:
-                                      'e.g., Passport, License, Certificate',
+                                  hintText: 'e.g., Passport, License, Certificate',
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
@@ -306,6 +340,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 16),
 
+                              
                               TextFormField(
                                 controller: _expiryController,
                                 decoration: const InputDecoration(
@@ -441,15 +476,77 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                           ),
                         ),
                       ),
-
+                      
                       const SizedBox(height: 20),
 
-                      // File Selection Card
                       Card(
                         elevation: 4,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sharing & Security Options',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              SwitchListTile(
+                                title: const Text('Allow Download'),
+                                subtitle: const Text('Permit others to download this document'),
+                                value: _isDownloadable,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isDownloadable = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.download),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text('Allow Screenshots'),
+                                subtitle: const Text('Allow screenshots/screen recording of this document'),
+                                value: _isScreenshotAllowed,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isScreenshotAllowed = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.screenshot),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text('Share Publicly (Experimental)'),
+                                subtitle: const Text('Make this document accessible via a unique link'),
+                                value: _isPubliclyShared,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isPubliclyShared = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.public),
+                                controlAffinity: ListTileControlAffinity.leading,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -457,58 +554,47 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                             children: [
                               Text(
                                 'Select Document File',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineSmall?.copyWith(
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue.shade700,
                                 ),
                               ),
                               const SizedBox(height: 16),
-
-                              // File Picker Button
+                              
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   onPressed: _isUploading ? null : _pickFile,
                                   icon: const Icon(Icons.file_upload),
-                                  label: Text(
-                                    _selectedFileName ?? 'Choose File',
-                                  ),
+                                  label: Text(_selectedFileName ?? 'Choose File'),
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.all(16),
                                     side: BorderSide(
-                                      color:
-                                          (_selectedFile != null ||
-                                                  _selectedFileBytes != null)
-                                              ? Colors.green
-                                              : Colors.grey,
+                                      color: (_selectedFile != null || _selectedFileBytes != null)
+                                          ? Colors.green 
+                                          : Colors.grey,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ),
-
-                              if (_selectedFile != null ||
-                                  _selectedFileBytes != null) ...[
+                              
+                              if (_selectedFile != null || _selectedFileBytes != null) ...[
                                 const SizedBox(height: 12),
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Colors.green.shade50,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.green.shade200,
-                                    ),
+                                    border: Border.all(color: Colors.green.shade200),
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: Colors.green.shade600,
-                                      ),
+                                      Icon(Icons.check_circle, 
+                                           color: Colors.green.shade600),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
@@ -524,19 +610,19 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                   ),
                                 ),
                               ],
-
+                              
                               const SizedBox(height: 12),
                               Text(
                                 'Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.grey.shade600),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ),
-
-                      // Upload Progress
+                      
                       if (_isUploading) ...[
                         const SizedBox(height: 20),
                         Card(
@@ -544,15 +630,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               children: [
                                 Text(
                                   'Uploading... ${(_uploadProgress * 100).toInt()}%',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
                                 ),
                                 const SizedBox(height: 8),
                                 LinearProgressIndicator(
@@ -572,33 +657,26 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                 ),
               ),
             ),
-
-            // Upload Button at Bottom
+            
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton.icon(
                 onPressed: _isUploading ? null : _uploadDocument,
-                icon:
-                    _isUploading
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                        : const Icon(Icons.cloud_upload),
+                icon: _isUploading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.cloud_upload),
                 label: Text(
                   _isUploading ? 'Uploading...' : 'Upload Document',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade700,

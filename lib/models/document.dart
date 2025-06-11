@@ -130,6 +130,7 @@ class Document {
       shareId: shareId ?? this.shareId,
       isPubliclyShared: isPubliclyShared ?? this.isPubliclyShared,
       sharedWith: sharedWith ?? this.sharedWith,
+
     );
   }
 }

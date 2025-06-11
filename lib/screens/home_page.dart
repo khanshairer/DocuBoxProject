@@ -37,11 +37,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
-  void _navigateToUpload(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const DocumentUploadPage()));
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +47,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
-
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
@@ -68,6 +69,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             },
             icon: const Icon(Icons.notifications_active),
           ),
+          IconButton(onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Notifications coming soon!')),
+            );
+          }, icon: const Icon(Icons.notifications_active)),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 10),
@@ -76,6 +82,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               horizontal: 16.0,
               vertical: 8.0,
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -91,6 +98,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                           },
                         )
                         : null,
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white70),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref.read(searchQueryProvider.notifier).state = '';
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: Colors.white24,
                 border: OutlineInputBorder(
@@ -101,6 +117,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   vertical: 0,
                   horizontal: 16,
                 ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 hintStyle: const TextStyle(color: Colors.white70),
                 labelStyle: const TextStyle(color: Colors.white),
               ),
@@ -159,6 +176,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
+              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -177,6 +195,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   horizontal: 24,
                   vertical: 12,
                 ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -204,6 +223,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
+              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -253,6 +273,12 @@ class DocumentCard extends StatelessWidget {
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
+                  Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      document.name.isNotEmpty ? document.name : 'Untitled Document',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -264,6 +290,7 @@ class DocumentCard extends StatelessWidget {
                         const SnackBar(
                           content: Text('Document options coming soon!'),
                         ),
+                        const SnackBar(content: Text('Document options coming soon!')),
                       );
                     },
                   ),
@@ -288,6 +315,7 @@ class DocumentCard extends StatelessWidget {
                       document.expiryDate.isBefore(DateTime.now())
                           ? Colors.red
                           : Colors.green.shade700,
+                  color: document.expiryDate.isBefore(DateTime.now()) ? Colors.red : Colors.green.shade700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -300,6 +328,7 @@ class DocumentCard extends StatelessWidget {
                       SnackBar(
                         content: Text('Viewing ${document.name} coming soon!'),
                       ),
+                      SnackBar(content: Text('Viewing ${document.name} coming soon!')),
                     );
                   },
                   icon: const Icon(Icons.visibility),
