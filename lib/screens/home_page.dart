@@ -45,9 +45,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              context.go('/upload-document');
+              context.go('/document-upload');
             },
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.upload),
           ),
           IconButton(
             onPressed: () {
@@ -123,7 +123,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.go('/upload-document');
+          context.go('/document-upload');
         },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
