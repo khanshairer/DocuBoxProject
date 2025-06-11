@@ -5,6 +5,7 @@ import '../screens/home_page.dart';
 import '../screens/login_page.dart';
 import '../providers/auth_state_provider.dart'; // This is the updated import
 import '../screens/welcome_page.dart';
+import '../screens/document_upload_page.dart';
 
 // The appRouterProvider is a Riverpod Provider that returns a GoRouter instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -32,6 +33,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/welcome',
         name: 'welcom',
         builder: (context, state) => const WelcomePage(),
+      ),
+      GoRoute(
+        path: '/document-upload',
+        name: 'document-upload',
+        builder: (context, state) => const DocumentUploadPage(),
       ),
     ],
     redirect: (context, state) {

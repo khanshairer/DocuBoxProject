@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -17,7 +18,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   final _nameController = TextEditingController();
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
-  
+
   File? _selectedFile;
   Uint8List? _selectedFileBytes;
   String? _selectedFileName;
@@ -42,7 +43,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       if (result != null) {
         setState(() {
           _selectedFileName = result.files.single.name;
-          
+
           if (kIsWeb) {
             // For web, use bytes
             _selectedFileBytes = result.files.single.bytes;
@@ -68,7 +69,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-    
+
     if (picked != null) {
       setState(() {
         _expiryController.text = '${picked.day}/${picked.month}/${picked.year}';
@@ -77,7 +78,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   }
 
   Future<void> _uploadDocument() async {
-    if (!_formKey.currentState!.validate() || 
+    if (!_formKey.currentState!.validate() ||
         (_selectedFile == null && _selectedFileBytes == null)) {
       _showErrorSnackBar('Please fill all fields and select a file');
       return;
@@ -92,12 +93,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       // Create a unique filename
       String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       String fileName = '${timestamp}_$_selectedFileName';
-      
+
       // Upload file to Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
-      
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'documents/$fileName',
+      );
+
       UploadTask uploadTask;
-      
+
       if (kIsWeb && _selectedFileBytes != null) {
         uploadTask = storageRef.putData(_selectedFileBytes!);
       } else if (_selectedFile != null) {
@@ -128,7 +131,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
       _showSuccessSnackBar('Document uploaded successfully!');
       _clearForm();
-      
     } catch (e) {
       _showErrorSnackBar('Upload failed: ${e.toString()}');
     } finally {
@@ -175,9 +177,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Upload Document'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        elevation: 2,
+        actions: [
+          IconButton(
+            onPressed: () {
+              context.go('/');
+            },
+            icon: Icon(Icons.home),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -200,13 +207,15 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                             children: [
                               Text(
                                 'Document Information',
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue.shade700,
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              
+
                               // Name Field
                               TextFormField(
                                 controller: _nameController,
@@ -223,7 +232,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 },
                               ),
                               const SizedBox(height: 16),
-                              
+
                               // Type Field
                               TextFormField(
                                 controller: _typeController,
@@ -231,7 +240,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                   labelText: 'Type',
                                   border: OutlineInputBorder(),
                                   prefixIcon: Icon(Icons.category),
-                                  hintText: 'e.g., Passport, License, Certificate',
+                                  hintText:
+                                      'e.g., Passport, License, Certificate',
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
@@ -241,7 +251,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 },
                               ),
                               const SizedBox(height: 16),
-                              
+
                               // Expiry Field
                               TextFormField(
                                 controller: _expiryController,
@@ -264,9 +274,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // File Selection Card
                       Card(
                         elevation: 4,
@@ -277,44 +287,55 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                             children: [
                               Text(
                                 'Select Document File',
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue.shade700,
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              
+
                               // File Picker Button
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   onPressed: _isUploading ? null : _pickFile,
                                   icon: const Icon(Icons.file_upload),
-                                  label: Text(_selectedFileName ?? 'Choose File'),
+                                  label: Text(
+                                    _selectedFileName ?? 'Choose File',
+                                  ),
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.all(16),
                                     side: BorderSide(
-                                      color: (_selectedFile != null || _selectedFileBytes != null)
-                                          ? Colors.green 
-                                          : Colors.grey,
+                                      color:
+                                          (_selectedFile != null ||
+                                                  _selectedFileBytes != null)
+                                              ? Colors.green
+                                              : Colors.grey,
                                     ),
                                   ),
                                 ),
                               ),
-                              
-                              if (_selectedFile != null || _selectedFileBytes != null) ...[
+
+                              if (_selectedFile != null ||
+                                  _selectedFileBytes != null) ...[
                                 const SizedBox(height: 12),
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Colors.green.shade50,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.green.shade200),
+                                    border: Border.all(
+                                      color: Colors.green.shade200,
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.check_circle, 
-                                           color: Colors.green.shade600),
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green.shade600,
+                                      ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
@@ -329,19 +350,18 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                   ),
                                 ),
                               ],
-                              
+
                               const SizedBox(height: 12),
                               Text(
                                 'Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey.shade600),
                               ),
                             ],
                           ),
                         ),
                       ),
-                      
+
                       // Upload Progress
                       if (_isUploading) ...[
                         const SizedBox(height: 20),
@@ -353,7 +373,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               children: [
                                 Text(
                                   'Uploading... ${(_uploadProgress * 100).toInt()}%',
-                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 LinearProgressIndicator(
@@ -373,7 +395,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                 ),
               ),
             ),
-            
+
             // Upload Button at Bottom
             const SizedBox(height: 16),
             SizedBox(
@@ -381,19 +403,25 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
               height: 56,
               child: ElevatedButton.icon(
                 onPressed: _isUploading ? null : _uploadDocument,
-                icon: _isUploading 
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Icon(Icons.cloud_upload),
+                icon:
+                    _isUploading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : const Icon(Icons.cloud_upload),
                 label: Text(
                   _isUploading ? 'Uploading...' : 'Upload Document',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade700,
