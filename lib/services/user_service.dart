@@ -32,7 +32,7 @@ class UserService {
             .set(appUser.toFirestore());
       } else {
         // Optionally update user info if it has changed
-        final existingData = userDoc.data() as Map<String, dynamic>?;
+        final existingData = userDoc.data();
         if (existingData != null) {
           bool needsUpdate = false;
           Map<String, dynamic> updates = {};

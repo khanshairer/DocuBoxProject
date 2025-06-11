@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_state_provider.dart';
-// Note: Adjusted import path for document_upload_page.dart as it's now in lib/screens/
-import 'document_upload_page.dart';
 import '../widget/homepage_menu_bar_widget.dart';
-import '../models/document.dart';
 import '../providers/documents_provider.dart';
-import '../models/document.dart';
-import '../providers/documents_provider.dart';
-import '../widgets/share_settings_modal.dart';
+import 'package:go_router/go_router.dart';
+import '../widgets/document_card.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -37,30 +33,22 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
-  
-
   @override
   Widget build(BuildContext context) {
     final authNotifier = ref.watch(authStateProvider);
     final user = authNotifier.currentUser;
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
-    if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        elevation: 2,
         actions: [
+          IconButton(
+            onPressed: () {
+              context.go('/document-upload');
+            },
+            icon: const Icon(Icons.upload),
+          ),
           IconButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -69,11 +57,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             },
             icon: const Icon(Icons.notifications_active),
           ),
-          IconButton(onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Notifications coming soon!')),
-            );
-          }, icon: const Icon(Icons.notifications_active)),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 10),
@@ -82,12 +65,11 @@ class _HomePageState extends ConsumerState<HomePage> {
               horizontal: 16.0,
               vertical: 8.0,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search documents...',
-                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                prefixIcon: const Icon(Icons.search),
                 suffixIcon:
                     _searchController.text.isNotEmpty
                         ? IconButton(
@@ -98,17 +80,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                           },
                         )
                         : null,
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white70),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(searchQueryProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
                 filled: true,
-                fillColor: Colors.white24,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: BorderSide.none,
@@ -117,12 +89,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                   vertical: 0,
                   horizontal: 16,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 hintStyle: const TextStyle(color: Colors.white70),
                 labelStyle: const TextStyle(color: Colors.white),
               ),
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              cursorColor: Colors.white,
+              cursorColor: Colors.blue[900],
             ),
           ),
         ),
@@ -152,7 +122,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToUpload(context),
+        onPressed: () {
+          context.go('/document-upload');
+        },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         child: const Icon(Icons.add),
@@ -176,7 +148,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
-              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -186,21 +157,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () => _navigateToUpload(context),
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Upload Document'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -223,7 +179,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
-              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -238,109 +193,3 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 }
-
-class DocumentCard extends StatelessWidget {
-  final Document document;
-
-  const DocumentCard({super.key, required this.document});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 120),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.description,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      document.name.isNotEmpty
-                          ? document.name
-                          : 'Untitled Document',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                  Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      document.name.isNotEmpty ? document.name : 'Untitled Document',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Document options coming soon!'),
-                        ),
-                        const SnackBar(content: Text('Document options coming soon!')),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Type: ${document.type.isNotEmpty ? document.type : 'N/A'}',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'File: ${document.fileName.isNotEmpty ? document.fileName : 'N/A'}',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Expires: ${document.expiryDate.day.toString().padLeft(2, '0')}/${document.expiryDate.month.toString().padLeft(2, '0')}/${document.expiryDate.year}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color:
-                      document.expiryDate.isBefore(DateTime.now())
-                          ? Colors.red
-                          : Colors.green.shade700,
-                  color: document.expiryDate.isBefore(DateTime.now()) ? Colors.red : Colors.green.shade700,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: TextButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Viewing ${document.name} coming soon!'),
-                      ),
-                      SnackBar(content: Text('Viewing ${document.name} coming soon!')),
-                    );
-                  },
-                  icon: const Icon(Icons.visibility),
-                  label: const Text('View Document'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
