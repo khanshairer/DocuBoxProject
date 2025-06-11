@@ -125,7 +125,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       String fileName = '${timestamp}_$_selectedFileName';
 
       // Upload file to Firebase Storage
-      late var storageRef;
+      late dynamic storageRef;
       storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
 
       String safeFileName = _selectedFileName ?? 'unknown_file';
