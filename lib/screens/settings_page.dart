@@ -1,221 +1,188 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_settings_provider.dart'; // Import theme settings provider
 
-// Define custom color constants for clarity and easy reuse
-final Color kPrimaryBlue900 = const Color.fromARGB(255, 13, 71, 161);
-final Color kAccentAmber400 = Colors.amber[400]!;
+class SettingsPage extends ConsumerWidget {
+  const SettingsPage({super.key});
 
-/// Defines the application's overall theme data.
-/// This centralizes theme configuration, making it easy to modify
-/// consistent styles across the app.
-class AppTheme {
-  // Private constructor to prevent instantiation, as it's a utility class.
-  AppTheme._();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeSettings = ref.watch(
+      themeSettingsProvider,
+    ); // Watch for theme state
+    final themeNotifier = ref.read(
+      themeSettingsProvider.notifier,
+    ); // Access notifier methods
 
-  /// Creates a Light ThemeData instance.
-  ///
-  /// [fontSizeFactor] scales all text sizes.
-  /// [brightnessFactor] adjusts overall brightness.
-  static ThemeData lightTheme({
-    double fontSizeFactor = 1.0,
-    double brightnessFactor = 1.0,
-  }) {
-    final baseBrightness = Brightness.light;
-    final primaryColor = kPrimaryBlue900;
-    final accentColor = kAccentAmber400;
-
-    // Apply brightness adjustment
-    final adjustedBrightness = baseBrightness; // Simplistic, direct brightness adjustment is complex.
-                                              // Usually, you adjust color shades based on factor.
-                                              // For now, we'll keep it simple or remove if problematic.
-
-    return ThemeData(
-      brightness: adjustedBrightness,
-      primarySwatch: Colors.blue,
-      colorScheme: ColorScheme.fromSwatch(
-        primarySwatch: Colors.blue,
-        accentColor: accentColor,
-        brightness: adjustedBrightness,
-      ).copyWith(
-        primary: primaryColor,
-        onPrimary: Colors.white,
-        secondary: accentColor,
-        onSecondary: Colors.black,
-      ),
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-
-      textTheme: GoogleFonts.latoTextTheme(
-        ThemeData(brightness: adjustedBrightness).textTheme,
-      ).apply(
-        fontSizeFactor: fontSizeFactor, // Apply font size scaling here
-      ),
-
-      appBarTheme: AppBarTheme(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 4.0,
-        titleTextStyle: GoogleFonts.roboto(
-          color: Colors.white,
-          fontSize: 20 * fontSizeFactor, // Scale font size
-          fontWeight: FontWeight.bold,
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-        centerTitle: true,
-      ),
-
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: accentColor,
-          textStyle: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 18 * fontSizeFactor, // Scale font size
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          // Theme Mode Toggle
+          Card(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'App Theme',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Light Theme'),
+                      Switch(
+                        value: themeSettings.themeMode == ThemeMode.dark,
+                        onChanged: (bool value) {
+                          themeNotifier.setThemeMode(
+                            value ? ThemeMode.dark : ThemeMode.light,
+                          );
+                        },
+                        activeColor: Theme.of(context).colorScheme.primary,
+                      ),
+                      const Text('Dark Theme'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Current: ${themeSettings.themeMode == ThemeMode.light ? 'Light' : 'Dark'}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          elevation: 4.0,
-        ),
-      ),
 
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: accentColor,
-          textStyle: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 16 * fontSizeFactor, // Scale font size
+          // Brightness Slider
+          Card(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Brightness',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Slider(
+                    value: themeSettings.brightnessFactor,
+                    min: 0.5, // Minimum brightness (50%)
+                    max: 1.5, // Maximum brightness (150%)
+                    divisions: 10,
+                    label: '${(themeSettings.brightnessFactor * 100).round()}%',
+                    onChanged: (double value) {
+                      themeNotifier.setBrightness(value);
+                    },
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    inactiveColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.3),
+                  ),
+                  Center(
+                    child: Text(
+                      'Current Brightness: ${(themeSettings.brightnessFactor * 100).round()}%',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
-          side: BorderSide(
-            color: accentColor,
-            width: 2.0,
+
+          // Font Size Adjustment
+          Card(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Font Size',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      ElevatedButton(
+                        onPressed: themeNotifier.decreaseFontSize,
+                        child: const Icon(Icons.remove),
+                      ),
+                      Text(
+                        '${(themeSettings.fontSizeFactor * 100).round()}%',
+                        style:
+                            Theme.of(context)
+                                .textTheme
+                                .headlineSmall, // Use a headline style for prominence
+                      ),
+                      ElevatedButton(
+                        onPressed: themeNotifier.increaseFontSize,
+                        child: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'Adjust text size for better readability.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
+
+          // Example of other settings (add more as needed)
+          Card(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Notification Settings'),
+              trailing: Switch(
+                value: true, // Example value
+                onChanged: (bool value) {
+                  // Implement notification toggle logic
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+              ),
+              onTap: () {
+                // Navigate to a more detailed notification settings page
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Go to detailed notification settings'),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      ),
-
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: accentColor,
-          textStyle: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 16 * fontSizeFactor, // Scale font size
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-        ),
-      ),
-    );
-  }
-
-  /// Creates a Dark ThemeData instance.
-  ///
-  /// [fontSizeFactor] scales all text sizes.
-  /// [brightnessFactor] adjusts overall brightness.
-  static ThemeData darkTheme({
-    double fontSizeFactor = 1.0,
-    double brightnessFactor = 1.0,
-  }) {
-    final baseBrightness = Brightness.dark;
-    final primaryColorDark = Colors.blue.shade800; // Darker blue for dark theme
-    final accentColorDark = Colors.amber.shade300; // Slightly lighter amber for dark theme
-
-    // Apply brightness adjustment
-    final adjustedBrightness = baseBrightness;
-
-    return ThemeData(
-      brightness: adjustedBrightness,
-      primarySwatch: Colors.blue,
-      scaffoldBackgroundColor: Colors.grey.shade900, // Dark background for dark theme
-      cardColor: Colors.grey.shade800, // Dark card background for dark theme
-      dialogBackgroundColor: Colors.grey.shade800,
-
-      colorScheme: ColorScheme.fromSwatch(
-        primarySwatch: Colors.blue,
-        accentColor: accentColorDark,
-        brightness: adjustedBrightness,
-      ).copyWith(
-        primary: primaryColorDark,
-        onPrimary: Colors.white,
-        secondary: accentColorDark,
-        onSecondary: Colors.black,
-        surface: Colors.grey.shade800, // For Card, Dialog backgrounds
-        onSurface: Colors.white, // Text on surface
-      ),
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-
-      textTheme: GoogleFonts.latoTextTheme(
-        ThemeData(brightness: adjustedBrightness).textTheme,
-      ).apply(
-        fontSizeFactor: fontSizeFactor, // Apply font size scaling here
-        bodyColor: Colors.white, // Default text color in dark theme
-        displayColor: Colors.white, // Default display color in dark theme
-      ),
-
-      appBarTheme: AppBarTheme(
-        backgroundColor: primaryColorDark,
-        foregroundColor: Colors.white,
-        elevation: 4.0,
-        titleTextStyle: GoogleFonts.roboto(
-          color: Colors.white,
-          fontSize: 20 * fontSizeFactor,
-          fontWeight: FontWeight.bold,
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
-        centerTitle: true,
-      ),
-
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColorDark,
-          foregroundColor: accentColorDark,
-          textStyle: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 18 * fontSizeFactor,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          elevation: 4.0,
-        ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: accentColorDark,
-          textStyle: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 16 * fontSizeFactor,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 20.0),
-          side: BorderSide(
-            color: accentColorDark,
-            width: 2.0,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-        ),
-      ),
-
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: accentColorDark,
-          textStyle: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 16 * fontSizeFactor,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-        ),
+        ],
       ),
     );
   }
 }
-
