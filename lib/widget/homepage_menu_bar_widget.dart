@@ -69,6 +69,15 @@ class HomePageMenuBar extends StatelessWidget {
               context.go('/'); // Navigate to Home
             },
           ),
+          //upload option
+          ListTile(
+            leading: const Icon(Icons.mark_email_read),
+            title: const Text('Upload Document'),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              context.go('/document-upload'); // Navigate to Home
+            },
+          ),
           // Profile option
           ListTile(
             leading: const Icon(Icons.person),
