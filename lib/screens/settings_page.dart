@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_settings_provider.dart'; // Import theme settings provider
+import 'package:go_router/go_router.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -15,7 +16,17 @@ class SettingsPage extends ConsumerWidget {
     ); // Access notifier methods
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              context.go('/');
+            },
+            icon: const Icon(Icons.home),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
