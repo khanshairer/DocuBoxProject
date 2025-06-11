@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_state_provider.dart';
 // Note: Adjusted import path for document_upload_page.dart as it's now in lib/screens/
-import 'document_upload_page.dart';
 import '../widget/homepage_menu_bar_widget.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
 import '../widgets/share_settings_modal.dart';
+import 'package:go_router/go_router.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -45,14 +45,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     final user = authNotifier.currentUser;
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
-    if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
     
     return Scaffold(
       appBar: AppBar(
@@ -63,11 +55,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon!')),
-              );
+              context.go('/upload-document');
             },
-            icon: const Icon(Icons.notifications_active),
+            icon: const Icon(Icons.add),
           ),
           IconButton(onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +72,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               horizontal: 16.0,
               vertical: 8.0,
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -152,7 +141,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToUpload(context),
+      onPressed: () {context.go('/upload-document')},
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         child: const Icon(Icons.add),
@@ -187,7 +176,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
-              onPressed: () => _navigateToUpload(context),
+              onPressed: () {context.go('/upload-document')},
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload Document'),
               style: ElevatedButton.styleFrom(
@@ -223,7 +212,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
-              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
