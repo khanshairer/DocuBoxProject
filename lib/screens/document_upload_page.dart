@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import '../../widgets/user_selector_modal.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -18,6 +20,12 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   final _nameController = TextEditingController();
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
+  final _tagsController = TextEditingController();
+
+  bool _isDownloadable = true;
+  bool _isScreenshotAllowed = true;
+  bool _isPubliclyShared = false;
+  List<String> _sharedWith = [];
 
   File? _selectedFile;
   Uint8List? _selectedFileBytes;
@@ -30,6 +38,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     _nameController.dispose();
     _typeController.dispose();
     _expiryController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -45,11 +54,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
           _selectedFileName = result.files.single.name;
 
           if (kIsWeb) {
-            // For web, use bytes
             _selectedFileBytes = result.files.single.bytes;
             _selectedFile = null;
           } else {
-            // For mobile/desktop, use file path
             if (result.files.single.path != null) {
               _selectedFile = File(result.files.single.path!);
               _selectedFileBytes = null;
@@ -72,7 +79,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
     if (picked != null) {
       setState(() {
-        _expiryController.text = '${picked.day}/${picked.month}/${picked.year}';
+        _expiryController.text =
+            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }
@@ -80,7 +88,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   Future<void> _uploadDocument() async {
     if (!_formKey.currentState!.validate() ||
         (_selectedFile == null && _selectedFileBytes == null)) {
-      _showErrorSnackBar('Please fill all fields and select a file');
+      _showErrorSnackBar('Please fill all fields and select a file.');
       return;
     }
 
@@ -90,13 +98,39 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     });
 
     try {
-      // Create a unique filename
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _showErrorSnackBar('No authenticated user found. Please log in.');
+        return;
+      }
+
+      DateTime parsedExpiryDate;
+      try {
+        final parts = _expiryController.text.trim().split('/');
+        parsedExpiryDate = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      } catch (e) {
+        _showErrorSnackBar(
+          'Invalid expiry date format. Please use DD/MM/YYYY.',
+        );
+        return;
+      }
+
       String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       String fileName = '${timestamp}_$_selectedFileName';
 
       // Upload file to Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref().child(
-        'documents/$fileName',
+      late var storageRef;
+      storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
+
+      String safeFileName = _selectedFileName ?? 'unknown_file';
+      String storageFileName = '${user.uid}_${timestamp}_$safeFileName';
+
+      storageRef = FirebaseStorage.instance.ref().child(
+        'user_documents/${user.uid}/$storageFileName',
       );
 
       UploadTask uploadTask;
@@ -106,10 +140,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       } else if (_selectedFile != null) {
         uploadTask = storageRef.putFile(_selectedFile!);
       } else {
-        throw Exception('No file data available');
+        throw Exception('No file data available for upload.');
       }
 
-      // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
@@ -119,14 +152,28 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // Save document metadata to Firestore
+      List<String> tagsList =
+          _tagsController.text
+              .trim()
+              .split(',')
+              .map((tag) => tag.trim())
+              .where((tag) => tag.isNotEmpty)
+              .toList();
+
       await FirebaseFirestore.instance.collection('documents').add({
+        'userId': user.uid,
         'name': _nameController.text.trim(),
         'type': _typeController.text.trim(),
-        'expiry': _expiryController.text.trim(),
+        'expiry': Timestamp.fromDate(parsedExpiryDate),
         'fileName': _selectedFileName,
         'downloadUrl': downloadUrl,
         'uploadedAt': FieldValue.serverTimestamp(),
+        'tags': tagsList,
+        'isDownloadable': _isDownloadable,
+        'isScreenshotAllowed': _isScreenshotAllowed,
+        'isPubliclyShared': _isPubliclyShared,
+        'shareId': null,
+        'sharedWith': _sharedWith,
       });
 
       _showSuccessSnackBar('Document uploaded successfully!');
@@ -145,14 +192,20 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     _nameController.clear();
     _typeController.clear();
     _expiryController.clear();
+    _tagsController.clear();
     setState(() {
       _selectedFile = null;
       _selectedFileBytes = null;
       _selectedFileName = null;
+      _isDownloadable = true;
+      _isScreenshotAllowed = true;
+      _isPubliclyShared = false;
+      _sharedWith = [];
     });
   }
 
   void _showErrorSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -163,6 +216,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   }
 
   void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -197,9 +251,11 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Document Information Card
                       Card(
                         elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -216,7 +272,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 20),
 
-                              // Name Field
                               TextFormField(
                                 controller: _nameController,
                                 decoration: const InputDecoration(
@@ -226,14 +281,13 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return 'Please enter a name';
+                                    return 'Please enter a name.';
                                   }
                                   return null;
                                 },
                               ),
                               const SizedBox(height: 16),
 
-                              // Type Field
                               TextFormField(
                                 controller: _typeController,
                                 decoration: const InputDecoration(
@@ -245,14 +299,13 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 ),
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return 'Please enter document type';
+                                    return 'Please enter document type.';
                                   }
                                   return null;
                                 },
                               ),
                               const SizedBox(height: 16),
 
-                              // Expiry Field
                               TextFormField(
                                 controller: _expiryController,
                                 decoration: const InputDecoration(
@@ -265,9 +318,123 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 onTap: _selectDate,
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) {
-                                    return 'Please select expiry date';
+                                    return 'Please select an expiry date.';
                                   }
                                   return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              TextFormField(
+                                controller: _tagsController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Tags (comma-separated)',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.tag),
+                                  hintText: 'e.g., important, finance, travel',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sharing & Security Options',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              SwitchListTile(
+                                title: const Text('Allow Download'),
+                                subtitle: const Text(
+                                  'Permit others to download this document',
+                                ),
+                                value: _isDownloadable,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isDownloadable = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.download),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text('Allow Screenshots'),
+                                subtitle: const Text(
+                                  'Allow screenshots/screen recording of this document',
+                                ),
+                                value: _isScreenshotAllowed,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isScreenshotAllowed = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.screenshot),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text(
+                                  'Share Publicly (Experimental)',
+                                ),
+                                subtitle: const Text(
+                                  'Make this document accessible via a unique link',
+                                ),
+                                value: _isPubliclyShared,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isPubliclyShared = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.public),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                              ),
+                              const Divider(),
+
+                              ListTile(
+                                leading: const Icon(Icons.people),
+                                title: const Text('Share with Users'),
+                                subtitle: Text(
+                                  _sharedWith.isEmpty
+                                      ? 'No users selected'
+                                      : '${_sharedWith.length} user${_sharedWith.length == 1 ? '' : 's'} selected',
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios),
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder:
+                                        (context) => UserSelectorModal(
+                                          initialSelectedUserIds: _sharedWith,
+                                          onSelectionChanged: (
+                                            selectedUserIds,
+                                          ) {
+                                            setState(() {
+                                              _sharedWith = selectedUserIds;
+                                            });
+                                          },
+                                        ),
+                                  );
                                 },
                               ),
                             ],
@@ -280,6 +447,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                       // File Selection Card
                       Card(
                         elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -314,6 +484,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                               ? Colors.green
                                               : Colors.grey,
                                     ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -344,6 +517,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                             color: Colors.green.shade700,
                                             fontWeight: FontWeight.w500,
                                           ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],
@@ -367,6 +541,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                         const SizedBox(height: 20),
                         Card(
                           elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
