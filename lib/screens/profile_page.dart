@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -10,6 +12,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool _isEditing = false;
   bool _showPasswordFields = false;
+  File? _profileImage;
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -19,6 +22,22 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _profileImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -96,10 +115,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       border: Border.all(color: Colors.blue[900]!, width: 3),
                     ),
                     child: ClipOval(
-                      child: Image.asset(
-                        'assets/icons/default_profile_icon.png',
-                        fit: BoxFit.cover,
-                      ),
+                      child:
+                          _profileImage != null
+                              ? Image.file(_profileImage!, fit: BoxFit.cover)
+                              : Image.asset(
+                                'assets/icons/default_profile_icon.png',
+                                fit: BoxFit.cover,
+                              ),
                     ),
                   ),
                   if (_isEditing)
@@ -111,13 +133,16 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       child: IconButton(
                         icon: const Icon(Icons.camera_alt, color: Colors.white),
-                        onPressed: () {
-                          // TODO: Implement image picker
-                        },
+                        onPressed: _pickImage,
                       ),
                     ),
                 ],
               ),
+              if (_isEditing && _profileImage != null)
+                TextButton(
+                  onPressed: () => setState(() => _profileImage = null),
+                  child: const Text('Remove photo'),
+                ),
               const SizedBox(height: 20),
               Text(
                 "John Doe", // Replace with actual username
