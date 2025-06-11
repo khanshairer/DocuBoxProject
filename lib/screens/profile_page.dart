@@ -24,15 +24,19 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
+  // use mounted to prevent run time error 
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (!mounted) return; // ✅ Check after await
+
       if (image != null) {
         setState(() {
           _profileImage = File(image.path);
         });
       }
     } catch (e) {
+      if (!mounted) return; // ✅ Check again before using context
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
       );

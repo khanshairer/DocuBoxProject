@@ -74,7 +74,6 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.mark_email_read),
             title: const Text('Upload Document'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
               context.go('/document-upload'); // Navigate to Home
             },
           ),
