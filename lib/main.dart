@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'common/app_theme.dart';
+import 'common/dark_theme.dart';
 // Import your GoRouter provider
 import 'routing/app_router.dart'; // Assuming your router file is in lib/router/app_router.dart
+import 'providers/theme_settings_provider.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized before Firebase.
@@ -25,12 +27,18 @@ class MyApp extends ConsumerWidget {
     // Obtain the GoRouter instance from the appRouterProvider.
     // Riverpod will ensure this is properly initialized and updated.
     final goRouter = ref.watch(appRouterProvider);
+    final themeSettings = ref.watch(themeSettingsProvider);
 
     return MaterialApp.router(
       title: 'DocuBox',
       debugShowCheckedModeBanner: false,
       // CORRECTED: Use your external theme data here
-      theme: AppTheme.lightTheme, // <--- THIS LINE WAS THE ISSUE!
+      theme:
+          themeSettings.themeMode == ThemeMode.dark
+              ? DarkTheme.darkTheme
+              : AppTheme.lightTheme,
+      darkTheme: DarkTheme.darkTheme, // Explicit dark theme
+      themeMode: themeSettings.themeMode, // <--- THIS LINE WAS THE ISSUE!
       // Assign the GoRouter's routerConfig to MaterialApp.router
       routerConfig: goRouter,
 
