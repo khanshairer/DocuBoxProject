@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_state_provider.dart'; // Import your auth state provider
-import 'upload_page_ajseby/document_upload_page.dart'; // Import by ajseby
+import '../providers/auth_state_provider.dart';
+import 'upload_page_ajseby/document_upload_page.dart';
 import '../widget/homepage_menu_bar_widget.dart';
-import '../models/document.dart'; // IMPORTANT: Import your Document model
-import '../providers/documents_provider.dart'; // IMPORTANT: Import your documents provider
+import '../models/document.dart';
+import '../providers/documents_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -14,13 +14,11 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  // Controller for the search text field
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Add a listener to the search controller to update the search query provider
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -31,14 +29,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  // This method updates the searchQueryProvider in Riverpod whenever the text changes
   void _onSearchChanged() {
-    // We use ref.read (not ref.watch) here because we are inside a listener
-    // and only want to modify the state, not rebuild the widget based on it.
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
-  // Navigate to the document upload page
   void _navigateToUpload(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -49,17 +43,11 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the authStateProvider to get the FirebaseAuthStateNotifier instance.
     final authNotifier = ref.watch(authStateProvider);
     final user = authNotifier.currentUser;
-
-    // Watch the filteredDocumentsProvider to get the list of documents.
-    // This will react to both Firebase data changes and search query changes.
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
-    // Show a loading indicator or placeholder if user is not yet loaded (though GoRouter handles this largely)
     if (user == null) {
-      print('DEBUG: HomePage - User is null, showing CircularProgressIndicator.');
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -67,9 +55,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       );
     }
     
-    // Print the current user's UID for debugging purposes
-    print('DEBUG: HomePage - Currently logged-in user UID: ${user.uid}');
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
@@ -77,16 +62,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
-          // Notification icon button
           IconButton(onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Notifications coming soon!')),
             );
           }, icon: const Icon(Icons.notifications_active)),
         ],
-        // AppBar bottom section for the search bar
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight + 10), // Height for search bar
+          preferredSize: const Size.fromHeight(kToolbarHeight + 10),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
@@ -99,67 +82,50 @@ class _HomePageState extends ConsumerState<HomePage> {
                         icon: const Icon(Icons.clear, color: Colors.white70),
                         onPressed: () {
                           _searchController.clear();
-                          // Clear the Riverpod state for search query
-                          ref.read(searchQueryProvider.notifier).state = ''; 
+                          ref.read(searchQueryProvider.notifier).state = '';
                         },
                       )
-                    : null, // No clear icon if search is empty
+                    : null,
                 filled: true,
-                fillColor: Colors.white24, // Slightly transparent white for AppBar background
+                fillColor: Colors.white24,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide.none, // No border needed when filled
+                  borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 hintStyle: const TextStyle(color: Colors.white70),
                 labelStyle: const TextStyle(color: Colors.white),
               ),
               style: const TextStyle(color: Colors.white, fontSize: 16),
-              cursorColor: Colors.white, // Custom cursor color
+              cursorColor: Colors.white,
             ),
           ),
         ),
       ),
-      // Drawer for navigation menu
       drawer: HomePageMenuBar(authNotifier: authNotifier, currentUser: user),
-      // Main body content to display documents
       body: documentsAsyncValue.when(
         data: (documents) {
-          print('DEBUG: HomePage - Rendered ${documents.length} documents.');
-          // If no documents and no search query, show empty state
           if (documents.isEmpty && _searchController.text.isEmpty) {
-            return _buildEmptyState(context); 
-          } 
-          // If search query is present but no results found
-          else if (documents.isEmpty && _searchController.text.isNotEmpty) {
-            return _buildNoResultsState(); 
+            return _buildEmptyState(context);
+          } else if (documents.isEmpty && _searchController.text.isNotEmpty) {
+            return _buildNoResultsState();
           }
-          // Otherwise, display the list of documents
           return ListView.builder(
             padding: const EdgeInsets.all(16.0),
             itemCount: documents.length,
             itemBuilder: (context, index) {
               final document = documents[index];
-              // Print each document's UID for comparison
-              print('DEBUG: HomePage - Document #${index} UID: ${document.userId}');
-              return DocumentCard(document: document); // Custom widget to display each document
+              return DocumentCard(document: document);
             },
           );
         },
-        // Show loading indicator while documents are being fetched
-        loading: () {
-          print('DEBUG: HomePage - Documents loading...');
-          return const Center(child: CircularProgressIndicator());
-        },
-        // Show error message if fetching fails
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) {
-          print('ERROR: HomePage - Documents loading error: ${error.toString()}');
           return Center(
             child: Text('Error loading documents: ${error.toString()}'),
           );
         },
       ),
-      // Floating Action Button to navigate to upload page
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToUpload(context),
         backgroundColor: Theme.of(context).colorScheme.primary,
@@ -169,10 +135,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  // Helper widget for when there are no documents yet
   Widget _buildEmptyState(BuildContext context) {
     return Center(
-      child: SingleChildScrollView( // Added to prevent overflow on smaller screens
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -208,10 +173,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  // Helper widget for when search yields no results
   Widget _buildNoResultsState() {
     return Center(
-      child: SingleChildScrollView( // Added to prevent overflow on smaller screens
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -236,8 +200,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-// A simple widget to display a single document card
-// This can be extracted into its own file (e.g., lib/widgets/document_card.dart)
 class DocumentCard extends StatelessWidget {
   final Document document;
 
@@ -249,72 +211,69 @@ class DocumentCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16.0),
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    document.name,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 120),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      document.name.isNotEmpty ? document.name : 'Untitled Document',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Document options coming soon!')),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Type: ${document.type.isNotEmpty ? document.type : 'N/A'}',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'File: ${document.fileName.isNotEmpty ? document.fileName : 'N/A'}',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Expires: ${document.expiryDate.day.toString().padLeft(2, '0')}/${document.expiryDate.month.toString().padLeft(2, '0')}/${document.expiryDate.year}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: document.expiryDate.isBefore(DateTime.now()) ? Colors.red : Colors.green.shade700,
+                  fontWeight: FontWeight.w500,
                 ),
-                // TODO: Add options button for edit/delete/share
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: TextButton.icon(
                   onPressed: () {
-                    // Implement options menu
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Document options coming soon!')),
+                      SnackBar(content: Text('Viewing ${document.name} coming soon!')),
                     );
                   },
+                  icon: const Icon(Icons.visibility),
+                  label: const Text('View Document'),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Type: ${document.type}',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'File: ${document.fileName}',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Expires: ${document.expiryDate.day.toString().padLeft(2, '0')}/${document.expiryDate.month.toString().padLeft(2, '0')}/${document.expiryDate.year}',
-              style: TextStyle(
-                fontSize: 14,
-                // Highlight expired documents in red
-                color: document.expiryDate.isBefore(DateTime.now()) ? Colors.red : Colors.green.shade700,
-                fontWeight: FontWeight.w500,
               ),
-            ),
-            // TODO: Add a button to view/preview the document (PDF preview core feature)
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: TextButton.icon(
-                onPressed: () {
-                  // This is where you would navigate to your PDF viewer page
-                  // For now, it's a placeholder.
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Viewing ${document.name} coming soon!')),
-                  );
-                },
-                icon: const Icon(Icons.visibility),
-                label: const Text('View Document'),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

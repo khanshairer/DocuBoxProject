@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Needed for Timestamp and FieldValue
-import 'package:firebase_auth/firebase_auth.dart'; // Needed for FirebaseAuth.instance.currentUser
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'package:flutter/foundation.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -18,10 +18,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   final _nameController = TextEditingController();
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
-  final _tagsController = TextEditingController(); // Controller for tags input
+  final _tagsController = TextEditingController();
   
+  bool _isDownloadable = true;
+  bool _isScreenshotAllowed = true;
+  bool _isPubliclyShared = false;
+
   File? _selectedFile;
-  Uint8List? _selectedFileBytes; // For web platform
+  Uint8List? _selectedFileBytes;
   String? _selectedFileName;
   bool _isUploading = false;
   double _uploadProgress = 0.0;
@@ -31,11 +35,10 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     _nameController.dispose();
     _typeController.dispose();
     _expiryController.dispose();
-    _tagsController.dispose(); // Dispose tags controller
+    _tagsController.dispose();
     super.dispose();
   }
 
-  // Handles picking a file from the device/web
   Future<void> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -63,7 +66,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     }
   }
 
-  // Handles selecting an expiry date using a date picker
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -79,7 +81,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     }
   }
 
-  // Handles the document upload process to Firebase Storage and Firestore
   Future<void> _uploadDocument() async {
     if (!_formKey.currentState!.validate() || 
         (_selectedFile == null && _selectedFileBytes == null)) {
@@ -137,7 +138,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // Split tags string by commas and trim whitespace
       List<String> tagsList = _tagsController.text.trim().split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
 
       await FirebaseFirestore.instance.collection('documents').add({
@@ -148,7 +148,11 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'fileName': _selectedFileName,
         'downloadUrl': downloadUrl,
         'uploadedAt': FieldValue.serverTimestamp(),
-        'tags': tagsList, // Save the list of tags
+        'tags': tagsList,
+        'isDownloadable': _isDownloadable,
+        'isScreenshotAllowed': _isScreenshotAllowed,
+        'isPubliclyShared': _isPubliclyShared,
+        'shareId': null,
       });
 
       _showSuccessSnackBar('Document uploaded successfully!');
@@ -164,20 +168,21 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     }
   }
 
-  // Clears all form fields and resets selected file state
   void _clearForm() {
     _nameController.clear();
     _typeController.clear();
     _expiryController.clear();
-    _tagsController.clear(); // Clear tags controller
+    _tagsController.clear();
     setState(() {
       _selectedFile = null;
       _selectedFileBytes = null;
       _selectedFileName = null;
+      _isDownloadable = true;
+      _isScreenshotAllowed = true;
+      _isPubliclyShared = false;
     });
   }
 
-  // Shows a red SnackBar for error messages
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -189,7 +194,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     );
   }
 
-  // Shows a green SnackBar for success messages
   void _showSuccessSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +225,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Document Information Card
                       Card(
                         elevation: 4,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -239,7 +242,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 20),
                               
-                              // Name Field
                               TextFormField(
                                 controller: _nameController,
                                 decoration: const InputDecoration(
@@ -256,7 +258,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 16),
                               
-                              // Type Field (e.g., Passport, License)
                               TextFormField(
                                 controller: _typeController,
                                 decoration: const InputDecoration(
@@ -274,7 +275,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 16),
                               
-                              // Expiry Field with date picker
                               TextFormField(
                                 controller: _expiryController,
                                 decoration: const InputDecoration(
@@ -294,7 +294,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 16),
 
-                              // Tags Field (e.g., comma-separated tags)
                               TextFormField(
                                 controller: _tagsController,
                                 decoration: const InputDecoration(
@@ -303,7 +302,68 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                   prefixIcon: Icon(Icons.tag),
                                   hintText: 'e.g., important, finance, travel',
                                 ),
-                                // Tags are optional, so no validator needed here
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sharing & Security Options',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              
+                              SwitchListTile(
+                                title: const Text('Allow Download'),
+                                subtitle: const Text('Permit others to download this document'),
+                                value: _isDownloadable,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isDownloadable = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.download),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text('Allow Screenshots'),
+                                subtitle: const Text('Allow screenshots/screen recording of this document'),
+                                value: _isScreenshotAllowed,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isScreenshotAllowed = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.screenshot),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text('Share Publicly (Experimental)'),
+                                subtitle: const Text('Make this document accessible via a unique link'),
+                                value: _isPubliclyShared,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isPubliclyShared = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.public),
+                                controlAffinity: ListTileControlAffinity.leading,
                               ),
                             ],
                           ),
@@ -312,7 +372,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                       
                       const SizedBox(height: 20),
                       
-                      // File Selection Card
                       Card(
                         elevation: 4,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -330,7 +389,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ),
                               const SizedBox(height: 16),
                               
-                              // File Picker Button
                               SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
@@ -349,7 +407,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 ),
                               ),
                               
-                              // Display selected file info if available
                               if (_selectedFile != null || _selectedFileBytes != null) ...[
                                 const SizedBox(height: 12),
                                 Container(
@@ -380,7 +437,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                               ],
                               
                               const SizedBox(height: 12),
-                              // Helper text for supported formats
                               Text(
                                 'Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -392,7 +448,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                         ),
                       ),
                       
-                      // Upload Progress Indicator
                       if (_isUploading) ...[
                         const SizedBox(height: 20),
                         Card(
@@ -425,7 +480,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
               ),
             ),
             
-            // Upload Button at the bottom
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,

@@ -9,7 +9,11 @@ class Document {
   final String fileName;
   final String downloadUrl;
   final DateTime uploadedAt;
-  final List<String> tags; // Added for search functionality and categorization
+  final List<String> tags;
+  final bool isDownloadable;      
+  final bool isScreenshotAllowed; 
+  final String? shareId;          
+  final bool isPubliclyShared;
 
   Document({
     required this.id,
@@ -20,12 +24,16 @@ class Document {
     required this.fileName,
     required this.downloadUrl,
     required this.uploadedAt,
-    this.tags = const [], // Initialize as an empty list if not provided
+    this.tags = const [],
+    this.isDownloadable = true,
+    this.isScreenshotAllowed = true,
+    this.shareId,
+    this.isPubliclyShared = false,
   });
 
   // Factory constructor to create a Document from a Firestore DocumentSnapshot
   factory Document.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>?; // Use nullable map
+    final data = doc.data() as Map<String, dynamic>?;
     if (data == null) {
       throw StateError('Missing data for Document with ID: ${doc.id}');
     }
@@ -35,35 +43,37 @@ class Document {
       userId: data['userId'] as String? ?? '',
       name: data['name'] as String? ?? 'Untitled',
       type: data['type'] as String? ?? 'Uncategorized',
-      // Parse expiry date string (DD/MM/YYYY) into DateTime
       expiryDate: _parseExpiryDate(data['expiry']),
       fileName: data['fileName'] as String? ?? 'No Name',
       downloadUrl: data['downloadUrl'] as String? ?? '',
       uploadedAt: (data['uploadedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      tags: List<String>.from(data['tags'] ?? []), // Ensure tags are parsed as List<String>
+      tags: List<String>.from(data['tags'] ?? []),
+      isDownloadable: data['isDownloadable'] as bool? ?? true,
+      isScreenshotAllowed: data['isScreenshotAllowed'] as bool? ?? true,
+      shareId: data['shareId'] as String?,
+      isPubliclyShared: data['isPubliclyShared'] as bool? ?? false,
     );
   }
 
-  // Helper to parse expiry date from Firestore data (can be Timestamp or String)
+  // Helper to parse expiry date from Firestore data (can be Timestamp or String for backward compatibility)
   static DateTime _parseExpiryDate(dynamic expiryData) {
     if (expiryData is Timestamp) {
       return expiryData.toDate();
     } else if (expiryData is String) {
-      // Handle the case where it might still be a string (from old uploads or manual input)
       try {
         List<String> parts = expiryData.split('/');
         if (parts.length == 3) {
           return DateTime(
-            int.parse(parts[2]), // Year
-            int.parse(parts[1]), // Month
-            int.parse(parts[0]), // Day
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
           );
         }
       } catch (e) {
-        print('Error parsing string date: $expiryData, ${e.toString()}');
+        // Fallback for invalid date format, or log using a proper logger if needed for debugging
       }
     }
-    return DateTime.now(); // Default to now if parsing fails
+    return DateTime.now();
   }
 
   // Method to convert a Document object to a Map for Firestore
@@ -72,11 +82,48 @@ class Document {
       'userId': userId,
       'name': name,
       'type': type,
-      'expiry': Timestamp.fromDate(expiryDate), // Always save as Timestamp
+      'expiry': Timestamp.fromDate(expiryDate),
       'fileName': fileName,
       'downloadUrl': downloadUrl,
       'uploadedAt': FieldValue.serverTimestamp(),
-      'tags': tags, // Include tags in Firestore data
+      'tags': tags,
+      'isDownloadable': isDownloadable,
+      'isScreenshotAllowed': isScreenshotAllowed,
+      'shareId': shareId,
+      'isPubliclyShared': isPubliclyShared,
     };
+  }
+
+  // copyWith method
+  Document copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? type,
+    DateTime? expiryDate,
+    String? fileName,
+    String? downloadUrl,
+    DateTime? uploadedAt,
+    List<String>? tags,
+    bool? isDownloadable,
+    bool? isScreenshotAllowed,
+    String? shareId,
+    bool? isPubliclyShared,
+  }) {
+    return Document(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      expiryDate: expiryDate ?? this.expiryDate,
+      fileName: fileName ?? this.fileName,
+      downloadUrl: downloadUrl ?? this.downloadUrl,
+      uploadedAt: uploadedAt ?? this.uploadedAt,
+      tags: tags ?? this.tags,
+      isDownloadable: isDownloadable ?? this.isDownloadable,
+      isScreenshotAllowed: isScreenshotAllowed ?? this.isScreenshotAllowed,
+      shareId: shareId ?? this.shareId,
+      isPubliclyShared: isPubliclyShared ?? this.isPubliclyShared,
+    );
   }
 }
