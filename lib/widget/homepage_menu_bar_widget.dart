@@ -87,6 +87,15 @@ class HomePageMenuBar extends StatelessWidget {
               context.go('/profile'); // Navigate to Profile
             },
           ),
+          // Shared Documents option
+          ListTile(
+            leading: const Icon(Icons.share),
+            title: const Text('Shared Documents'),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              context.go('/shared-documents'); // Navigate to Shared Documents
+            },
+          ),
           // Settings option
           ListTile(
             leading: const Icon(Icons.settings),
@@ -105,6 +114,7 @@ class HomePageMenuBar extends StatelessWidget {
               context.go('/chat'); // Navigate to Chat
             },
           ),
+
           const Divider(), // A visual divider
           // Logout option
           ListTile(

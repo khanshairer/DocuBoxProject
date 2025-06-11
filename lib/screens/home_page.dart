@@ -6,6 +6,9 @@ import 'document_upload_page.dart';
 import '../widget/homepage_menu_bar_widget.dart';
 import '../models/document.dart';
 import '../providers/documents_provider.dart';
+import '../models/document.dart';
+import '../providers/documents_provider.dart';
+import '../widgets/share_settings_modal.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -34,13 +37,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
-  void _navigateToUpload(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const DocumentUploadPage(),
-      ),
-    );
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +46,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
     if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
       return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -63,6 +61,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         foregroundColor: Colors.white,
         elevation: 2,
         actions: [
+          IconButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notifications coming soon!')),
+              );
+            },
+            icon: const Icon(Icons.notifications_active),
+          ),
           IconButton(onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Notifications coming soon!')),
@@ -72,12 +78,26 @@ class _HomePageState extends ConsumerState<HomePage> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 10),
           child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search documents...',
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                suffixIcon:
+                    _searchController.text.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white70),
+                          onPressed: () {
+                            _searchController.clear();
+                            ref.read(searchQueryProvider.notifier).state = '';
+                          },
+                        )
+                        : null,
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, color: Colors.white70),
@@ -92,6 +112,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 hintStyle: const TextStyle(color: Colors.white70),
@@ -147,6 +171,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: 20),
             Text(
               'No documents yet!',
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
               style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -162,6 +191,10 @@ class _HomePageState extends ConsumerState<HomePage> {
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload Document'),
               style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -185,6 +218,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: 20),
             Text(
               'No matching documents found.',
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
               style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -221,6 +259,20 @@ class DocumentCard extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  Icon(
+                    Icons.description,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      document.name.isNotEmpty
+                          ? document.name
+                          : 'Untitled Document',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                   Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 12),
                   Expanded(
@@ -235,6 +287,9 @@ class DocumentCard extends StatelessWidget {
                     icon: const Icon(Icons.more_vert),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Document options coming soon!'),
+                        ),
                         const SnackBar(content: Text('Document options coming soon!')),
                       );
                     },
@@ -256,6 +311,10 @@ class DocumentCard extends StatelessWidget {
                 'Expires: ${document.expiryDate.day.toString().padLeft(2, '0')}/${document.expiryDate.month.toString().padLeft(2, '0')}/${document.expiryDate.year}',
                 style: TextStyle(
                   fontSize: 14,
+                  color:
+                      document.expiryDate.isBefore(DateTime.now())
+                          ? Colors.red
+                          : Colors.green.shade700,
                   color: document.expiryDate.isBefore(DateTime.now()) ? Colors.red : Colors.green.shade700,
                   fontWeight: FontWeight.w500,
                 ),
@@ -266,6 +325,9 @@ class DocumentCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Viewing ${document.name} coming soon!'),
+                      ),
                       SnackBar(content: Text('Viewing ${document.name} coming soon!')),
                     );
                   },
@@ -280,3 +342,5 @@ class DocumentCard extends StatelessWidget {
     );
   }
 }
+
+

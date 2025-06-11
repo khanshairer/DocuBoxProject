@@ -14,6 +14,7 @@ class Document {
   final bool isScreenshotAllowed; 
   final String? shareId;          
   final bool isPubliclyShared;
+  final List<String> sharedWith;
 
   Document({
     required this.id,
@@ -29,6 +30,7 @@ class Document {
     this.isScreenshotAllowed = true,
     this.shareId,
     this.isPubliclyShared = false,
+    this.sharedWith = const [],
   });
 
   // Factory constructor to create a Document from a Firestore DocumentSnapshot
@@ -52,6 +54,7 @@ class Document {
       isScreenshotAllowed: data['isScreenshotAllowed'] as bool? ?? true,
       shareId: data['shareId'] as String?,
       isPubliclyShared: data['isPubliclyShared'] as bool? ?? false,
+      sharedWith: List<String>.from(data['sharedWith'] ?? []),
     );
   }
 
@@ -91,6 +94,7 @@ class Document {
       'isScreenshotAllowed': isScreenshotAllowed,
       'shareId': shareId,
       'isPubliclyShared': isPubliclyShared,
+      'sharedWith': sharedWith,
     };
   }
 
@@ -109,6 +113,7 @@ class Document {
     bool? isScreenshotAllowed,
     String? shareId,
     bool? isPubliclyShared,
+    List<String>? sharedWith,
   }) {
     return Document(
       id: id ?? this.id,
@@ -124,6 +129,8 @@ class Document {
       isScreenshotAllowed: isScreenshotAllowed ?? this.isScreenshotAllowed,
       shareId: shareId ?? this.shareId,
       isPubliclyShared: isPubliclyShared ?? this.isPubliclyShared,
+      sharedWith: sharedWith ?? this.sharedWith,
+
     );
   }
 }

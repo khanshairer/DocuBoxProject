@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
+import '../../widgets/user_selector_modal.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -19,6 +21,12 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
   final _tagsController = TextEditingController();
+
+  bool _isDownloadable = true;
+  bool _isScreenshotAllowed = true;
+  bool _isPubliclyShared = false;
+  List<String> _sharedWith = [];
+
   
   bool _isDownloadable = true;
   bool _isScreenshotAllowed = true;
@@ -76,6 +84,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     
     if (picked != null) {
       setState(() {
+        _expiryController.text =
+            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
         _expiryController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
@@ -99,6 +109,35 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         _showErrorSnackBar('No authenticated user found. Please log in.');
         return;
       }
+
+      DateTime parsedExpiryDate;
+      try {
+        final parts = _expiryController.text.trim().split('/');
+        parsedExpiryDate = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      } catch (e) {
+        _showErrorSnackBar(
+          'Invalid expiry date format. Please use DD/MM/YYYY.',
+        );
+        return;
+      }
+
+      String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+      String fileName = '${timestamp}_$_selectedFileName';
+
+      // Upload file to Firebase Storage
+      late var storageRef;
+      storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
+
+      String safeFileName = _selectedFileName ?? 'unknown_file';
+      String storageFileName = '${user.uid}_${timestamp}_$safeFileName';
+
+      storageRef = FirebaseStorage.instance.ref().child(
+        'user_documents/${user.uid}/$storageFileName',
+      );
 
       DateTime parsedExpiryDate;
       try {
@@ -138,6 +177,14 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
+      List<String> tagsList =
+          _tagsController.text
+              .trim()
+              .split(',')
+              .map((tag) => tag.trim())
+              .where((tag) => tag.isNotEmpty)
+              .toList();
+
       List<String> tagsList = _tagsController.text.trim().split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
 
       await FirebaseFirestore.instance.collection('documents').add({
@@ -153,6 +200,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'isScreenshotAllowed': _isScreenshotAllowed,
         'isPubliclyShared': _isPubliclyShared,
         'shareId': null,
+        'sharedWith': _sharedWith,
       });
 
       _showSuccessSnackBar('Document uploaded successfully!');
@@ -180,6 +228,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       _isDownloadable = true;
       _isScreenshotAllowed = true;
       _isPubliclyShared = false;
+      _sharedWith = [];
     });
   }
 
@@ -236,6 +285,10 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                     children: [
                       Card(
                         elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -250,6 +303,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 ),
                               ),
                               const SizedBox(height: 20),
+
+
                               
                               TextFormField(
                                 controller: _nameController,
@@ -266,6 +321,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 },
                               ),
                               const SizedBox(height: 16),
+
                               
                               TextFormField(
                                 controller: _typeController,
@@ -283,6 +339,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                 },
                               ),
                               const SizedBox(height: 16),
+
                               
                               TextFormField(
                                 controller: _expiryController,
@@ -316,11 +373,117 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                           ),
                         ),
                       ),
+
+                      const SizedBox(height: 20),
+
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sharing & Security Options',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              SwitchListTile(
+                                title: const Text('Allow Download'),
+                                subtitle: const Text(
+                                  'Permit others to download this document',
+                                ),
+                                value: _isDownloadable,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isDownloadable = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.download),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text('Allow Screenshots'),
+                                subtitle: const Text(
+                                  'Allow screenshots/screen recording of this document',
+                                ),
+                                value: _isScreenshotAllowed,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isScreenshotAllowed = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.screenshot),
+                              ),
+                              const Divider(),
+
+                              SwitchListTile(
+                                title: const Text(
+                                  'Share Publicly (Experimental)',
+                                ),
+                                subtitle: const Text(
+                                  'Make this document accessible via a unique link',
+                                ),
+                                value: _isPubliclyShared,
+                                onChanged: (bool value) {
+                                  setState(() {
+                                    _isPubliclyShared = value;
+                                  });
+                                },
+                                secondary: const Icon(Icons.public),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                              ),
+                              const Divider(),
+
+                              ListTile(
+                                leading: const Icon(Icons.people),
+                                title: const Text('Share with Users'),
+                                subtitle: Text(
+                                  _sharedWith.isEmpty
+                                      ? 'No users selected'
+                                      : '${_sharedWith.length} user${_sharedWith.length == 1 ? '' : 's'} selected',
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios),
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder:
+                                        (context) => UserSelectorModal(
+                                          initialSelectedUserIds: _sharedWith,
+                                          onSelectionChanged: (
+                                            selectedUserIds,
+                                          ) {
+                                            setState(() {
+                                              _sharedWith = selectedUserIds;
+                                            });
+                                          },
+                                        ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       
                       const SizedBox(height: 20),
 
                       Card(
                         elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -411,6 +574,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                           ? Colors.green 
                                           : Colors.grey,
                                     ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
@@ -461,6 +627,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                         const SizedBox(height: 20),
                         Card(
                           elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),

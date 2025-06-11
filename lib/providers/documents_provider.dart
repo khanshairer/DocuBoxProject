@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/document.dart';
+import '../models/user.dart';
 
 // Provider for the current search query
 final searchQueryProvider = StateProvider<String>((ref) => '');
@@ -26,6 +27,39 @@ final allDocumentsStreamProvider = StreamProvider.autoDispose<List<Document>>((r
         // Consider using a proper logging solution like 'logger' package
         // for production errors instead of just printing.
         return <Document>[];
+      });
+});
+
+// StreamProvider that fetches documents shared with the current user
+final sharedDocumentsStreamProvider = StreamProvider.autoDispose<List<Document>>((ref) {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value([]);
+  }
+
+  return FirebaseFirestore.instance
+      .collection('documents')
+      .where('sharedWith', arrayContains: user.uid)
+      .orderBy('uploadedAt', descending: true)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) => Document.fromFirestore(doc)).toList();
+      })
+      .handleError((error) {
+        return <Document>[];
+      });
+});
+
+// Provider for all users (for sharing functionality)
+final allUsersProvider = StreamProvider.autoDispose<List<AppUser>>((ref) {
+  return FirebaseFirestore.instance
+      .collection('users')
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList();
+      })
+      .handleError((error) {
+        return <AppUser>[];
       });
 });
 
