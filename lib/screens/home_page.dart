@@ -68,17 +68,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search documents...',
-                prefixIcon: const Icon(Icons.search,),
-                suffixIcon:
-                    _searchController.text.isNotEmpty
-                        ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            ref.read(searchQueryProvider.notifier).state = '';
-                          },
-                        )
-                        : null,
+                prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, color: Colors.white70),
