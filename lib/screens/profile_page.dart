@@ -244,9 +244,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
     } on FirebaseException catch (e) {
       // Catch Firebase specific exceptions
-      print(
-        'Firebase Storage Error during upload: ${e.code} - ${e.message}',
-      ); // Log error to console
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -258,7 +255,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } catch (e) {
-      print('General Error during image pick/upload: $e'); // Log other errors
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -325,9 +321,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
     } on FirebaseException catch (e) {
       // Catch Firebase specific exceptions
-      print(
-        'Firebase Storage Error during remove: ${e.code} - ${e.message}',
-      ); // Log error to console
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -339,7 +332,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } catch (e) {
-      print('General Error during image removal: $e'); // Log other errors
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to remove image: ${e.toString()}')),
