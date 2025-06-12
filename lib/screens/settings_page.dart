@@ -41,7 +41,6 @@ class SettingsPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
-                  // Changed to simple dark mode toggle switch
                   SwitchListTile(
                     title: const Text('Dark Mode'),
                     value: themeSettings.themeMode == ThemeMode.dark,
@@ -62,7 +61,7 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
 
-          // Rest of the settings remain exactly the same...
+          // Brightness Slider
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -89,9 +88,10 @@ class SettingsPage extends ConsumerWidget {
                       themeNotifier.setBrightness(value);
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
+                    // FIX: Replaced withOpacity with withAlpha for better precision
                     inactiveColor: Theme.of(
                       context,
-                    ).colorScheme.primary.withOpacity(0.3),
+                    ).colorScheme.primary.withAlpha((255 * 0.3).round()),
                   ),
                   Center(
                     child: Text(

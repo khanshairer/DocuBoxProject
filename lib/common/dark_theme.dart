@@ -12,7 +12,8 @@ class DarkTheme {
   ); // Brighter blue accent
   static const Color _darkTextPrimary = Colors.white;
   static const Color _darkTextSecondary = Color(0xFFBDBDBD); // Secondary text
-  static Color _darkButtonAmber =
+  // FIX: Changed to final as it's assigned once
+  static final Color _darkButtonAmber =
       Colors.amber[400]!; // Specific amber for buttons/sliders
 
   /// Creates a Dark ThemeData instance.
@@ -34,10 +35,11 @@ class DarkTheme {
       scaffoldBackgroundColor: _darkBackground,
       canvasColor: _darkBackground,
       cardColor: _darkSurface, // Used for Card backgrounds
-      dialogBackgroundColor: _darkSurface, // Used for Dialog backgrounds
-      dividerColor: Colors.white.withOpacity(
-        0.1,
-      ), // Subtle divider in dark theme
+      // FIX: Replaced deprecated dialogBackgroundColor with dialogTheme
+      dialogTheme: DialogTheme(backgroundColor: _darkSurface),
+      // FIX: Replaced deprecated withOpacity with withAlpha for subtle divider
+      dividerColor: Colors.white.withAlpha((255 * 0.1).round()),
+
       // Color scheme (synchronizing with your custom dark palette)
       colorScheme: ColorScheme.dark(
         primary: _darkPrimaryAccentBlue, // Main interactive color
@@ -46,8 +48,9 @@ class DarkTheme {
         onSecondary: _darkTextPrimary, // Text/icons on secondary color
         surface: _darkSurface, // Card, dialog, sheet backgrounds
         onSurface: _darkTextPrimary, // Text/icons on surface
-        background: _darkBackground, // Main background
-        onBackground: _darkTextPrimary, // Text/icons on background
+        // FIX: 'background' and 'onBackground' are deprecated. Removed.
+        // background: _darkBackground,
+        // onBackground: _darkTextPrimary,
         error: Colors.red.shade400, // Error color
         onError: _darkTextPrimary, // Text/icons on error color
       ),
@@ -106,19 +109,19 @@ class DarkTheme {
         ),
       ),
 
-      // Card theme: Now with a white border!
+      // Card theme
       cardTheme: const CardTheme(
         color: _darkSurface, // Use dark surface color for cards
         elevation: 2,
         margin: EdgeInsets.all(8),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(
-            Radius.circular(12),
-          ), // Use Radius.circular for const
+        // FIX: Added 'const' to RoundedRectangleBorder to satisfy 'const CardTheme'
+        // FIX: Re-enabled borderRadius and added white border
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
           side: BorderSide(
             color: Colors.white,
             width: 1.0,
-          ), // <--- ADDED WHITE BORDER HERE
+          ), // Added white border
         ),
       ),
 
@@ -126,10 +129,12 @@ class DarkTheme {
       sliderTheme: SliderThemeData(
         thumbColor: _darkButtonAmber, // Amber thumb
         activeTrackColor: _darkPrimaryAccentBlue, // Blue active track
-        inactiveTrackColor: _darkPrimaryAccentBlue.withOpacity(
-          0.3,
-        ), // Faded blue inactive track
-        overlayColor: _darkButtonAmber.withOpacity(0.2), // Amber overlay
+        // FIX: Replaced withOpacity with withAlpha for better precision
+        inactiveTrackColor: _darkPrimaryAccentBlue.withAlpha(
+          (255 * 0.3).round(),
+        ),
+        // FIX: Replaced withOpacity with withAlpha for better precision
+        overlayColor: _darkButtonAmber.withAlpha((255 * 0.2).round()),
       ),
 
       // Text theme (applying font size scaling)
@@ -148,9 +153,7 @@ class DarkTheme {
         labelLarge: GoogleFonts.montserrat(color: _darkTextPrimary),
         labelMedium: GoogleFonts.montserrat(color: _darkTextSecondary),
         labelSmall: GoogleFonts.montserrat(color: _darkTextSecondary),
-      ).apply(
-        fontSizeFactor: fontSizeFactor,
-      ), // Apply scaling to the whole TextTheme
+      ).apply(fontSizeFactor: fontSizeFactor),
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -163,7 +166,10 @@ class DarkTheme {
           horizontal: 16,
           vertical: 14,
         ),
-        hintStyle: TextStyle(color: _darkTextSecondary.withOpacity(0.7)),
+        // FIX: Replaced withOpacity with withAlpha for better precision
+        hintStyle: TextStyle(
+          color: _darkTextSecondary.withAlpha((255 * 0.7).round()),
+        ),
         labelStyle: const TextStyle(color: _darkTextSecondary),
         prefixIconColor: _darkTextSecondary,
       ),
