@@ -46,7 +46,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Select Users',
+                  'Select Users to Share With',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
@@ -66,10 +66,11 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search users...',
+                // FIX: Use withAlpha
                 hintStyle: TextStyle(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.6),
+                  ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
                 ),
                 prefixIcon: Icon(
                   Icons.search,
@@ -78,9 +79,10 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
+                    // FIX: Use withAlpha
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.3),
+                    ).colorScheme.onSurface.withAlpha((255 * 0.3).round()),
                   ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
@@ -105,7 +107,10 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  // FIX: Use withAlpha
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withAlpha((255 * 0.2).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -140,19 +145,19 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                           Icon(
                             Icons.people_outline,
                             size: 64,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.4),
+                            // FIX: Use withAlpha
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withAlpha((255 * 0.4).round()),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             searchQuery.isEmpty
                                 ? 'No users found'
                                 : 'No users match our search',
+                            // FIX: Use withAlpha
                             style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                           ),
                         ],
@@ -169,10 +174,9 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
                         color: Theme.of(context).colorScheme.surface,
-                        // FIX: Added SizedBox with a fixed height around CheckboxListTile
                         child: SizedBox(
                           height:
-                              110.0, // Adjust this value as needed for desired height
+                              72.0, // Adjust this value as needed for desired height
                           child: CheckboxListTile(
                             value: isSelected,
                             onChanged: (bool? value) {
@@ -189,7 +193,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                                   ? user.displayName!
                                   : user.email,
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w500,
                                 color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
@@ -197,20 +201,21 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                                 user.displayName?.isNotEmpty == true
                                     ? Text(
                                       user.email,
+                                      // FIX: Use withAlpha
                                       style: TextStyle(
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onSurface
-                                            .withOpacity(0.7),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+                                            .withAlpha((255 * 0.7).round()),
                                       ),
                                     )
                                     : null,
                             secondary: CircleAvatar(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.2),
+                              // FIX: Use withAlpha
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withAlpha((255 * 0.2).round()),
                               child: Text(
                                 (user.displayName?.isNotEmpty == true
                                         ? user.displayName![0]
@@ -251,9 +256,9 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                             error.toString(),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
+                              // FIX: Use withAlpha
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                             textAlign: TextAlign.center,
                           ),
