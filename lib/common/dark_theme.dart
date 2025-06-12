@@ -33,11 +33,10 @@ class DarkTheme {
           _darkBackground, // Typically your main brand color, but for dark theme, this is dark background
       scaffoldBackgroundColor: _darkBackground,
       canvasColor: _darkBackground,
-      cardColor: _darkSurface, // Used for Card backgrounds
-      // FIX 1: Changed DialogTheme to DialogThemeData
-      dialogTheme: DialogThemeData(
+      // FIX 1: Correctly use DialogThemeData
+      dialogTheme: const DialogThemeData(
         backgroundColor: _darkSurface,
-      ), // <--- FIXED HERE
+      ), // <--- FIXED HERE: Added const and used DialogThemeData
 
       dividerColor: Colors.white.withAlpha((255 * 0.1).round()),
 
@@ -108,14 +107,21 @@ class DarkTheme {
         ),
       ),
 
-      // FIX 2: Changed CardTheme to CardThemeData
-      cardTheme: CardTheme(
-        color: _darkSurface,
+      // FIX 2: Correctly use CardThemeData and ensure const correctness
+      cardTheme: const CardThemeData(
+        // <--- FIXED HERE: Used CardThemeData AND added const
+        color: _darkSurface, // Use dark surface color for cards
         elevation: 2,
-        margin: const EdgeInsets.all(8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Colors.white, width: 1.0),
+        margin: const EdgeInsets.all(8), // <--- FIXED HERE: Added const
+        shape: const RoundedRectangleBorder(
+          // <--- FIXED HERE: Added const to RoundedRectangleBorder
+          borderRadius: BorderRadius.all(
+            const Radius.circular(12),
+          ), // <--- FIXED HERE: Added const to Radius.circular
+          side: BorderSide(
+            color: Colors.white,
+            width: 1.0,
+          ), // Added white border
         ),
       ),
 
