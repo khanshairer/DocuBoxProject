@@ -178,13 +178,13 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     TextButton(
-                      child: const Text("Don't have an account? Sign Up"),
                       onPressed:
                           _isLoading
                               ? null
                               : () => context.go(
                                 '/signup',
                               ), // Use go_router for navigation and disable when loading
+                      child: const Text("Don't have an account? Sign Up"),
                     ),
                   ],
                 ),
