@@ -45,12 +45,6 @@ class _HomePageState extends ConsumerState<HomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              context.go('/document-upload');
-            },
-            icon: const Icon(Icons.upload),
-          ),
-          IconButton(
-            onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Notifications coming soon!')),
               );

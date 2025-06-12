@@ -8,6 +8,7 @@ import '../screens/welcome_page.dart';
 import '../screens/document_upload_page.dart';
 import '../screens/shared_documents_page.dart';
 import '../screens//profile_page.dart';
+import '../screens/settings_page.dart';
 
 // The appRouterProvider is a Riverpod Provider that returns a GoRouter instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -55,6 +56,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/profile-page',
         name: 'profile-page',
         builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const SettingsPage(),
       ),
     ],
     redirect: (context, state) {
