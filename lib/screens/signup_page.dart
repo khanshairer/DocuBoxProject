@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -12,46 +13,112 @@ class SignupPage extends StatefulWidget {
 class _SignupPageState extends State<SignupPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final usernameController = TextEditingController();
   String error = '';
+  bool isCheckingUsername = false;
 
-  // Sign up with email and password
-  // Ensure the widget is still mounted before navigating or showing dialogs
+  Future<bool> _isUsernameTaken(String username) async {
+    final result =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .limit(1)
+            .get();
+
+    return result.docs.isNotEmpty;
+  }
 
   Future<void> _signup() async {
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
 
-      if (!mounted) return; // ✅ Ensure widget is still in the tree
+    if (username.isEmpty) {
+      setState(() => error = 'Username is required');
+      return;
+    }
+
+    if (username.length > 10) {
+      setState(() => error = 'Username must be at most 10 characters');
+      return;
+    }
+
+    setState(() {
+      isCheckingUsername = true;
+      error = '';
+    });
+
+    if (await _isUsernameTaken(username)) {
+      setState(() {
+        isCheckingUsername = false;
+        error = 'Username already taken';
+      });
+      return;
+    }
+
+    try {
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      final user = userCredential.user;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'email': email,
+          'username': username,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        await user.updateDisplayName(username);
+      }
+
+      if (!mounted) return;
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() => error = e.message ?? 'Signup failed');
       }
+    } finally {
+      if (mounted) {
+        setState(() => isCheckingUsername = false);
+      }
     }
   }
 
-  // sign up with Google
-  // Ensure the widget is still mounted before navigating or showing dialogs
-  // Error handling is done using setState to update the UI with error messages
   Future<void> _signupWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
+      final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
 
-      if (!mounted) return; // Ensure the widget is still in the tree
+      final user = userCredential.user;
+      if (user != null) {
+        final doc =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .get();
+        if (!doc.exists) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({
+                'email': user.email,
+                'username': user.displayName ?? '',
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+        }
+      }
+
+      if (!mounted) return;
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -69,6 +136,13 @@ class _SignupPageState extends State<SignupPage> {
         child: Column(
           children: [
             TextField(
+              controller: usernameController,
+              maxLength: 10,
+              decoration: const InputDecoration(
+                labelText: 'Username (max 10 chars)',
+              ),
+            ),
+            TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
             ),
@@ -82,8 +156,15 @@ class _SignupPageState extends State<SignupPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _signup,
-                child: const Text("Sign Up"),
+                onPressed: isCheckingUsername ? null : _signup,
+                child:
+                    isCheckingUsername
+                        ? const CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        )
+                        : const Text("Sign Up"),
               ),
             ),
             const SizedBox(height: 10),

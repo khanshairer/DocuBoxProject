@@ -325,7 +325,10 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                     widget.onSelectionChanged(selectedUserIds.toList());
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Apply Selection'),
+                  child: const Text(
+                    'Apply Selection',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ],
             ),

@@ -25,49 +25,43 @@ class HomePageMenuBar extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  child: profileImageState.when(
-                    data: (imageUrl) {
-                      return imageUrl != null && imageUrl.isNotEmpty
-                          ? ClipOval(
-                            child: Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              width: 60,
-                              height: 60,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withAlpha((255 * 0.6).round()),
-                                );
-                              },
-                            ),
-                          )
-                          : Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Theme.of(context).colorScheme.onSurface
-                                .withAlpha((255 * 0.6).round()),
-                          );
-                    },
-                    loading:
-                        () => CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        ),
-                    error:
-                        (err, stack) => Icon(
+                profileImageState.when(
+                  data: (imageUrl) {
+                    return CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      backgroundImage:
+                          (imageUrl != null && imageUrl.isNotEmpty)
+                              ? NetworkImage(imageUrl)
+                              : null,
+                      child:
+                          (imageUrl == null || imageUrl.isEmpty)
+                              ? Icon(
+                                Icons.person,
+                                size: 30,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withAlpha(150),
+                              )
+                              : null,
+                    );
+                  },
+                  loading:
+                      () => const CircleAvatar(
+                        radius: 30,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  error:
+                      (err, _) => CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        child: Icon(
                           Icons.error,
                           color: Theme.of(context).colorScheme.error,
-                          size: 60,
                         ),
-                  ),
+                      ),
                 ),
+
                 const SizedBox(height: 10),
                 Text(
                   currentUser?.displayName ?? currentUser?.email ?? 'Guest',

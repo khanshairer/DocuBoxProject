@@ -10,6 +10,7 @@ import '../screens/chat_page.dart';
 import '../screens/document_upload_page.dart'; // NEW IMPORT: For document upload page
 import '../screens/shared_documents_page.dart'; // NEW IMPORT: For shared documents page
 import '../providers/auth_state_provider.dart';
+import '../screens/signup_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
@@ -60,6 +61,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'shared_documents',
         builder: (context, state) => const SharedDocumentsPage(),
       ),
+      GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
     ],
     redirect: (context, state) {
       final bool loggedIn = authNotifier.currentUser != null;

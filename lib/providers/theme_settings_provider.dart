@@ -1,114 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // NEW IMPORT
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Manages the theme settings for the application, including
-/// theme mode (light/dark), font size, and brightness.
 class ThemeSettingsNotifier extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system; // Default to system theme
-  double _fontSizeFactor = 1.0; // Default font size (1.0 = normal)
-  double _brightnessFactor = 1.0; // Default brightness (1.0 = normal)
+  ThemeMode _themeMode = ThemeMode.system;
+  double _fontSizeFactor = 1.0;
+  double _brightnessFactor = 1.0;
+  bool _isLoading = true;
 
-  // Keys for SharedPreferences
   static const String _themeModeKey = 'themeMode';
   static const String _fontSizeKey = 'fontSizeFactor';
   static const String _brightnessKey = 'brightnessFactor';
 
-  // Private SharedPreferences instance
   late SharedPreferences _prefs;
 
-  // Constructor: Initializes settings from SharedPreferences
-  ThemeSettingsNotifier() {
-    _loadSettings(); // Call async load method
-  }
-
-  // Getters for current settings
   ThemeMode get themeMode => _themeMode;
   double get fontSizeFactor => _fontSizeFactor;
   double get brightnessFactor => _brightnessFactor;
+  bool get isLoading => _isLoading;
 
-  /// Loads saved theme settings from SharedPreferences.
+  ThemeSettingsNotifier() {
+    _initSettings();
+  }
+
+  Future<void> _initSettings() async {
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      await _loadSettings();
+    } catch (e) {
+      debugPrint('Error initializing theme settings: $e');
+      _themeMode = ThemeMode.system;
+      _fontSizeFactor = 1.0;
+      _brightnessFactor = 1.0;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _loadSettings() async {
-    _prefs = await SharedPreferences.getInstance();
-
+    // Load theme mode
     final savedThemeMode = _prefs.getString(_themeModeKey);
     if (savedThemeMode != null) {
       _themeMode = ThemeMode.values.firstWhere(
         (e) => e.toString() == 'ThemeMode.$savedThemeMode',
-        orElse: () => ThemeMode.system, // Fallback if invalid value
+        orElse: () => ThemeMode.system,
       );
     }
 
-    _fontSizeFactor = _prefs.getDouble(_fontSizeKey) ?? 1.0;
-    _brightnessFactor = _prefs.getDouble(_brightnessKey) ?? 1.0;
+    // Load font size with validation - FIXED PARENTHESIS HERE
+    _fontSizeFactor = (_prefs.getDouble(_fontSizeKey)?.clamp(0.8, 1.5)) ?? 1.0;
 
-    // Notify listeners after loading, so UI updates to saved state
-    notifyListeners();
+    // Load brightness with validation - FIXED PARENTHESIS HERE
+    _brightnessFactor =
+        (_prefs.getDouble(_brightnessKey)?.clamp(0.5, 1.5)) ?? 1.0;
   }
 
-  /// Saves the current theme mode to SharedPreferences.
-  Future<void> _saveThemeMode(ThemeMode mode) async {
-    await _prefs.setString(_themeModeKey, mode.name); // Using .name property of enum
+  Future<void> _saveSetting<T>(String key, T value) async {
+    try {
+      if (value is String) {
+        await _prefs.setString(key, value);
+      } else if (value is double) {
+        await _prefs.setDouble(key, value);
+      } else if (value is int) {
+        await _prefs.setInt(key, value);
+      } else if (value is bool) {
+        await _prefs.setBool(key, value);
+      }
+    } catch (e) {
+      debugPrint('Error saving setting $key: $e');
+    }
   }
 
-  /// Saves the current font size factor to SharedPreferences.
-  Future<void> _saveFontSizeFactor(double factor) async {
-    await _prefs.setDouble(_fontSizeKey, factor);
-  }
-
-  /// Saves the current brightness factor to SharedPreferences.
-  Future<void> _saveBrightnessFactor(double factor) async {
-    await _prefs.setDouble(_brightnessKey, factor);
-  }
-
-  /// Toggles the theme mode between light and dark.
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    _saveThemeMode(_themeMode); // Save on change
-    notifyListeners();
+    final newMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    setThemeMode(newMode);
   }
 
-  /// Sets the theme mode to the specified [newThemeMode].
   void setThemeMode(ThemeMode newThemeMode) {
     if (_themeMode != newThemeMode) {
       _themeMode = newThemeMode;
-      _saveThemeMode(_themeMode); // Save on change
+      _saveSetting(_themeModeKey, _themeMode.name);
       notifyListeners();
     }
   }
 
-  /// Sets the font size scaling factor.
-  /// Clamps the value between 0.8 and 1.5 for reasonable limits.
   void setFontSize(double factor) {
-    final newFactor = factor.clamp(0.8, 1.5); // Min 80%, Max 150%
+    final newFactor = factor.clamp(0.8, 1.5);
     if (_fontSizeFactor != newFactor) {
       _fontSizeFactor = newFactor;
-      _saveFontSizeFactor(_fontSizeFactor); // Save on change
+      _saveSetting(_fontSizeKey, _fontSizeFactor);
       notifyListeners();
     }
   }
 
-  /// Increments the font size.
-  void increaseFontSize() {
-    setFontSize(_fontSizeFactor + 0.1); // Increase by 10%
-  }
+  void increaseFontSize() => setFontSize(_fontSizeFactor + 0.1);
+  void decreaseFontSize() => setFontSize(_fontSizeFactor - 0.1);
 
-  /// Decrements the font size.
-  void decreaseFontSize() {
-    setFontSize(_fontSizeFactor - 0.1); // Decrease by 10%
-  }
-
-  /// Sets the brightness scaling factor.
-  /// Clamps the value between 0.5 and 1.5 for reasonable limits.
   void setBrightness(double factor) {
-    final newFactor = factor.clamp(0.5, 1.5); // Min 50% brightness, Max 150%
+    final newFactor = factor.clamp(0.5, 1.5);
     if (_brightnessFactor != newFactor) {
       _brightnessFactor = newFactor;
-      _saveBrightnessFactor(_brightnessFactor); // Save on change
+      _saveSetting(_brightnessKey, _brightnessFactor);
       notifyListeners();
     }
+  }
+
+  void resetToDefaults() {
+    _themeMode = ThemeMode.system;
+    _fontSizeFactor = 1.0;
+    _brightnessFactor = 1.0;
+
+    _prefs.remove(_themeModeKey);
+    _prefs.remove(_fontSizeKey);
+    _prefs.remove(_brightnessKey);
+
+    notifyListeners();
   }
 }
 
-/// Provider for accessing ThemeSettingsNotifier.
-final themeSettingsProvider = ChangeNotifierProvider((ref) => ThemeSettingsNotifier());
+final themeSettingsProvider = ChangeNotifierProvider<ThemeSettingsNotifier>((
+  ref,
+) {
+  return ThemeSettingsNotifier();
+});

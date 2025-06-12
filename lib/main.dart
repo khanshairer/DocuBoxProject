@@ -3,19 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'common/app_theme.dart';
-import 'common/dark_theme.dart';
-// Import your GoRouter provider
-import 'routing/app_router.dart'; // Assuming your router file is in lib/router/app_router.dart
+import 'common/dark_theme.dart' as DocuBoxDarkTheme;
+import 'routing/app_router.dart';
 import 'providers/theme_settings_provider.dart';
 
 void main() async {
-  // Ensure Flutter binding is initialized before Firebase.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase with platform-specific options.
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+  }
 
-  // Run the app, wrapped in ProviderScope for Riverpod state management.
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -24,35 +26,72 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Obtain the GoRouter instance from the appRouterProvider.
-    // Riverpod will ensure this is properly initialized and updated.
     final goRouter = ref.watch(appRouterProvider);
     final themeSettings = ref.watch(themeSettingsProvider);
+
+    // Validate theme settings to prevent null errors
+    final effectiveFontSizeFactor = themeSettings.fontSizeFactor.clamp(
+      0.8,
+      1.5,
+    );
+    final effectiveBrightnessFactor = themeSettings.brightnessFactor.clamp(
+      0.7,
+      1.3,
+    );
 
     return MaterialApp.router(
       title: 'DocuBox',
       debugShowCheckedModeBanner: false,
-      // CORRECTED: Use your external theme data here
       themeMode: themeSettings.themeMode,
-      // FIX 1: You MUST CALL the static lightTheme method with parameters.
-      theme: AppTheme.lightTheme(
-        // <--- THIS LINE HAS BEEN CHANGED to call the method
-        fontSizeFactor: themeSettings.fontSizeFactor,
-        brightnessFactor: themeSettings.brightnessFactor,
+      theme: _buildTheme(
+        isDark: false,
+        fontSizeFactor: effectiveFontSizeFactor,
+        brightnessFactor: effectiveBrightnessFactor,
       ),
-      // FIX 2: You MUST CALL the static darkTheme method with parameters.
-      darkTheme: DarkTheme.darkTheme(
-        // <--- THIS LINE HAS BEEN CHANGED to call the method
-        fontSizeFactor: themeSettings.fontSizeFactor,
-        brightnessFactor: themeSettings.brightnessFactor,
-      ), // <--- THIS LINE WAS THE ISSUE!
-      // Assign the GoRouter's routerConfig to MaterialApp.router
+      darkTheme: _buildTheme(
+        isDark: true,
+        fontSizeFactor: effectiveFontSizeFactor,
+        brightnessFactor: effectiveBrightnessFactor,
+      ),
       routerConfig: goRouter,
-
-      // The 'home' and 'routes' properties are no longer needed
-      // because GoRouter handles all navigation.
-      // The redirection logic in app_router.dart will decide
-      // whether to show HomePage or WelcomePage based on auth state.
     );
+  }
+
+  ThemeData _buildTheme({
+    required bool isDark,
+    required double fontSizeFactor,
+    required double brightnessFactor,
+  }) {
+    try {
+      // Get the base theme
+      final baseTheme =
+          isDark
+              ? DocuBoxDarkTheme.DarkTheme.darkTheme(
+                fontSizeFactor: fontSizeFactor,
+                brightnessFactor: brightnessFactor,
+              )
+              : AppTheme.lightTheme(
+                fontSizeFactor: fontSizeFactor,
+                brightnessFactor: brightnessFactor,
+              );
+
+      // Ensure all text styles have proper font sizes
+      return baseTheme.copyWith(
+        textTheme: baseTheme.textTheme.apply(
+          fontSizeFactor: fontSizeFactor,
+          bodyColor: baseTheme.textTheme.bodyLarge?.color,
+          displayColor: baseTheme.textTheme.bodyLarge?.color,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error building theme: $e');
+      return ThemeData(
+        brightness: isDark ? Brightness.dark : Brightness.light,
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(fontSize: 16.0 * fontSizeFactor),
+          bodyMedium: TextStyle(fontSize: 14.0 * fontSizeFactor),
+        ),
+      );
+    }
   }
 }
