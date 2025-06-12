@@ -2,120 +2,174 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DarkTheme {
-  DarkTheme._();
+  DarkTheme._(); // Private constructor
 
-  // Dark theme color palette
-  static const Color _primaryDark = Color(0xFF121212); // Dark background
-  static const Color _secondaryDark = Color(0xFF1E1E1E); // Cards/surfaces
-  static const Color _accentBlue = Color(0xFF1976D2); // Brighter blue accent
-  static const Color _textWhite = Colors.white;
-  static const Color _textSecondary = Color(0xFFBDBDBD); // Secondary text
+  // Dark theme color palette (using your provided values)
+  static const Color _darkBackground = Color(0xFF121212); // Dark background
+  static const Color _darkSurface = Color(0xFF1E1E1E); // Cards/surfaces
+  static const Color _darkPrimaryAccentBlue = Color(
+    0xFF1976D2,
+  ); // Brighter blue accent
+  static const Color _darkTextPrimary = Colors.white;
+  static const Color _darkTextSecondary = Color(0xFFBDBDBD); // Secondary text
+  static Color _darkButtonAmber =
+      Colors.amber[400]!; // Specific amber for buttons/sliders
 
-  static final ThemeData darkTheme = ThemeData.dark().copyWith(
-    // Base colors
-    primaryColor: _primaryDark,
-    scaffoldBackgroundColor: _primaryDark,
-    canvasColor: _primaryDark,
+  /// Creates a Dark ThemeData instance.
+  ///
+  /// [fontSizeFactor] scales all text sizes.
+  /// [brightnessFactor] is included for consistency but doesn't directly
+  /// affect these static color definitions.
+  static ThemeData darkTheme({
+    double fontSizeFactor = 1.0,
+    double brightnessFactor =
+        1.0, // Parameter for consistency, but colors are fixed
+  }) {
+    final baseBrightness = Brightness.dark;
 
-    // Color scheme
-    colorScheme: const ColorScheme.dark(
-      primary: _primaryDark,
-      secondary: _accentBlue,
-      surface: _secondaryDark,
-      background: _primaryDark,
-      onPrimary: _textWhite,
-      onSecondary: _textWhite,
-      onSurface: _textWhite,
-      onBackground: _textWhite,
-    ),
-
-    // App bar theme
-    appBarTheme: AppBarTheme(
-      backgroundColor: _primaryDark,
-      elevation: 4,
-      titleTextStyle: GoogleFonts.montserrat(
-        color: _textWhite,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
+    return ThemeData.dark().copyWith(
+      // Base colors
+      primaryColor:
+          _darkBackground, // Typically your main brand color, but for dark theme, this is dark background
+      scaffoldBackgroundColor: _darkBackground,
+      canvasColor: _darkBackground,
+      cardColor: _darkSurface, // Used for Card backgrounds
+      dialogBackgroundColor: _darkSurface, // Used for Dialog backgrounds
+      dividerColor: Colors.white.withOpacity(
+        0.1,
+      ), // Subtle divider in dark theme
+      // Color scheme (synchronizing with your custom dark palette)
+      colorScheme: ColorScheme.dark(
+        primary: _darkPrimaryAccentBlue, // Main interactive color
+        onPrimary: _darkTextPrimary, // Text/icons on primary color
+        secondary: _darkPrimaryAccentBlue, // Secondary accent color
+        onSecondary: _darkTextPrimary, // Text/icons on secondary color
+        surface: _darkSurface, // Card, dialog, sheet backgrounds
+        onSurface: _darkTextPrimary, // Text/icons on surface
+        background: _darkBackground, // Main background
+        onBackground: _darkTextPrimary, // Text/icons on background
+        error: Colors.red.shade400, // Error color
+        onError: _darkTextPrimary, // Text/icons on error color
       ),
-      iconTheme: const IconThemeData(color: _textWhite),
-    ),
-
-    // Button themes
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _accentBlue,
-        foregroundColor: _textWhite,
-        textStyle: GoogleFonts.montserrat(
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      brightness: baseBrightness, // Ensure explicit dark brightness
+      // App bar theme
+      appBarTheme: AppBarTheme(
+        backgroundColor: _darkBackground,
         elevation: 4,
-      ),
-    ),
-
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: _accentBlue,
-        textStyle: GoogleFonts.montserrat(
+        titleTextStyle: GoogleFonts.montserrat(
+          color: _darkTextPrimary, // White text
+          fontSize: 20 * fontSizeFactor, // Apply font size scaling
           fontWeight: FontWeight.bold,
-          fontSize: 16,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-        side: const BorderSide(color: _accentBlue, width: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        iconTheme: const IconThemeData(color: _darkTextPrimary), // White icons
+        centerTitle: true,
       ),
-    ),
 
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: _accentBlue,
-        textStyle: GoogleFonts.montserrat(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
+      // Button themes (synchronizing colors and applying font size scaling)
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor:
+              _darkButtonAmber, // Specific amber for elevated buttons
+          foregroundColor: _darkTextPrimary, // White text
+          textStyle: GoogleFonts.montserrat(
+            fontWeight: FontWeight.bold,
+            fontSize: 18 * fontSizeFactor, // Apply font size scaling
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 4,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       ),
-    ),
-
-    // Card theme
-    cardTheme: const CardTheme(
-      color: _secondaryDark,
-      elevation: 2,
-      margin: EdgeInsets.all(8),
-      //shape: RoundedRectangleBorder(borderRadius:  BorderRadius.circular(8)),
-    ),
-
-    // Text theme
-    textTheme: TextTheme(
-      displayLarge: GoogleFonts.montserrat(color: _textWhite),
-      displayMedium: GoogleFonts.montserrat(color: _textWhite),
-      headlineMedium: GoogleFonts.montserrat(color: _textWhite),
-      headlineSmall: GoogleFonts.montserrat(color: _textWhite),
-      titleLarge: GoogleFonts.montserrat(color: _textWhite),
-      titleMedium: GoogleFonts.montserrat(color: _textWhite),
-      titleSmall: GoogleFonts.montserrat(color: _textSecondary),
-      bodyLarge: GoogleFonts.montserrat(color: _textWhite),
-      bodyMedium: GoogleFonts.montserrat(color: _textWhite),
-      bodySmall: GoogleFonts.montserrat(color: _textSecondary),
-      labelLarge: GoogleFonts.montserrat(color: _textWhite),
-      labelSmall: GoogleFonts.montserrat(color: _textSecondary),
-    ),
-
-    // Input decoration theme
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: _secondaryDark,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _darkTextPrimary, // White text
+          textStyle: GoogleFonts.montserrat(
+            fontWeight: FontWeight.bold,
+            fontSize: 16 * fontSizeFactor, // Apply font size scaling
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          side: const BorderSide(
+            color: _darkPrimaryAccentBlue,
+            width: 2,
+          ), // Blue border
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: _darkTextPrimary, // White text
+          textStyle: GoogleFonts.montserrat(
+            fontWeight: FontWeight.bold,
+            fontSize: 16 * fontSizeFactor, // Apply font size scaling
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        ),
+      ),
 
-    // Icon theme
-    iconTheme: const IconThemeData(color: _accentBlue),
-  );
+      // Card theme: Now with a white border!
+      cardTheme: const CardTheme(
+        color: _darkSurface, // Use dark surface color for cards
+        elevation: 2,
+        margin: EdgeInsets.all(8),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(
+            Radius.circular(12),
+          ), // Use Radius.circular for const
+          side: BorderSide(
+            color: Colors.white,
+            width: 1.0,
+          ), // <--- ADDED WHITE BORDER HERE
+        ),
+      ),
+
+      // Slider theme
+      sliderTheme: SliderThemeData(
+        thumbColor: _darkButtonAmber, // Amber thumb
+        activeTrackColor: _darkPrimaryAccentBlue, // Blue active track
+        inactiveTrackColor: _darkPrimaryAccentBlue.withOpacity(
+          0.3,
+        ), // Faded blue inactive track
+        overlayColor: _darkButtonAmber.withOpacity(0.2), // Amber overlay
+      ),
+
+      // Text theme (applying font size scaling)
+      textTheme: TextTheme(
+        displayLarge: GoogleFonts.montserrat(color: _darkTextPrimary),
+        displayMedium: GoogleFonts.montserrat(color: _darkTextPrimary),
+        headlineLarge: GoogleFonts.montserrat(color: _darkTextPrimary),
+        headlineMedium: GoogleFonts.montserrat(color: _darkTextPrimary),
+        headlineSmall: GoogleFonts.montserrat(color: _darkTextPrimary),
+        titleLarge: GoogleFonts.montserrat(color: _darkTextPrimary),
+        titleMedium: GoogleFonts.montserrat(color: _darkTextPrimary),
+        titleSmall: GoogleFonts.montserrat(color: _darkTextSecondary),
+        bodyLarge: GoogleFonts.montserrat(color: _darkTextPrimary),
+        bodyMedium: GoogleFonts.montserrat(color: _darkTextPrimary),
+        bodySmall: GoogleFonts.montserrat(color: _darkTextSecondary),
+        labelLarge: GoogleFonts.montserrat(color: _darkTextPrimary),
+        labelMedium: GoogleFonts.montserrat(color: _darkTextSecondary),
+        labelSmall: GoogleFonts.montserrat(color: _darkTextSecondary),
+      ).apply(
+        fontSizeFactor: fontSizeFactor,
+      ), // Apply scaling to the whole TextTheme
+      // Input decoration theme
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: _darkSurface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        hintStyle: TextStyle(color: _darkTextSecondary.withOpacity(0.7)),
+        labelStyle: const TextStyle(color: _darkTextSecondary),
+        prefixIconColor: _darkTextSecondary,
+      ),
+
+      // Icon theme
+      iconTheme: const IconThemeData(color: _darkTextPrimary),
+    );
+  }
 }

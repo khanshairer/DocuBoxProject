@@ -33,12 +33,19 @@ class MyApp extends ConsumerWidget {
       title: 'DocuBox',
       debugShowCheckedModeBanner: false,
       // CORRECTED: Use your external theme data here
-      theme:
-          themeSettings.themeMode == ThemeMode.dark
-              ? DarkTheme.darkTheme
-              : AppTheme.lightTheme,
-      darkTheme: DarkTheme.darkTheme, // Explicit dark theme
-      themeMode: themeSettings.themeMode, // <--- THIS LINE WAS THE ISSUE!
+      themeMode: themeSettings.themeMode,
+      // FIX 1: You MUST CALL the static lightTheme method with parameters.
+      theme: AppTheme.lightTheme(
+        // <--- THIS LINE HAS BEEN CHANGED to call the method
+        fontSizeFactor: themeSettings.fontSizeFactor,
+        brightnessFactor: themeSettings.brightnessFactor,
+      ),
+      // FIX 2: You MUST CALL the static darkTheme method with parameters.
+      darkTheme: DarkTheme.darkTheme(
+        // <--- THIS LINE HAS BEEN CHANGED to call the method
+        fontSizeFactor: themeSettings.fontSizeFactor,
+        brightnessFactor: themeSettings.brightnessFactor,
+      ), // <--- THIS LINE WAS THE ISSUE!
       // Assign the GoRouter's routerConfig to MaterialApp.router
       routerConfig: goRouter,
 
