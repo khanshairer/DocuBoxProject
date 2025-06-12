@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import for User type
-import '../providers/auth_state_provider.dart'; // Import your auth state notifier
+import 'package:firebase_auth/firebase_auth.dart';
+import '../providers/auth_state_provider.dart';
 
-/// A custom Drawer widget for the HomePage menu.
+/// My custom Drawer widget for the HomePage menu.
 ///
 /// This widget requires [authNotifier] and [currentUser] to be passed in
 /// from its parent widget (HomePage) as they are needed for actions
@@ -24,13 +24,13 @@ class HomePageMenuBar extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero, // Remove default ListView padding
         children: <Widget>[
-          // Drawer header, typically showing user info
+          // My Drawer header, typically showing user info
           DrawerHeader(
             decoration: BoxDecoration(
               color:
                   Theme.of(
                     context,
-                  ).colorScheme.primary, // Use primary theme color
+                  ).colorScheme.primary, // Using primary theme color
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +50,7 @@ class HomePageMenuBar extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   currentUser?.email ??
-                      'Logged In User', // Use passed currentUser
+                      'Logged In User', // Using passed currentUser
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -60,70 +60,69 @@ class HomePageMenuBar extends StatelessWidget {
               ],
             ),
           ),
-          // Home option
+          // Home option (My Documents) - consistent with Home Page
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Home'),
+            title: const Text('Home (My Documents)'), // Clearer label
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/'); // Navigate to Home
+              context.go('/'); // Navigating to Home (root path)
             },
           ),
-          //upload option
+          // Upload Document option - changed to push for consistent stack
           ListTile(
-            leading: const Icon(Icons.mark_email_read),
+            leading: const Icon(Icons.upload_file), // Changed icon for clarity
             title: const Text('Upload Document'),
             onTap: () {
-              context.go('/document-upload'); // Navigate to Home
-            },
-          ),
-          // Profile option
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
-            onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/profile-page'); // Navigate to Profile
+              context.push('/document-upload'); // Using context.push
             },
           ),
-          // Shared Documents option
+          // Shared Documents option - changed to push for consistent stack
           ListTile(
             leading: const Icon(Icons.share),
             title: const Text('Shared Documents'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/shared-documents'); // Navigate to Shared Documents
+              context.push('/shared-documents'); // Using context.push
             },
           ),
-          // Settings option
+          // Profile option - changed to push for consistent stack & path
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Profile'),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              context.push('/profile'); // Using context.push, path is now /profile
+            },
+          ),
+          // Settings option - changed to push for consistent stack
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/settings'); // Navigate to Settings
+              context.push('/settings'); // Using context.push
             },
           ),
-          // Chat option
+          // Chat option - changed to push for consistent stack
           ListTile(
             leading: const Icon(Icons.chat),
             title: const Text('Chat'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.go('/chat'); // Navigate to Chat
+              context.push('/chat'); // Using context.push
             },
           ),
 
-          const Divider(), // A visual divider
+          const Divider(), // My visual divider
           // Logout option
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
               Navigator.pop(context); // Close the drawer
-              await authNotifier
-                  .signOut(); // Use passed authNotifier for logout
-              // GoRouter's redirect will handle navigation to login page
+              await authNotifier.signOut();
             },
           ),
         ],

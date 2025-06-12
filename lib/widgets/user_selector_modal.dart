@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/documents_provider.dart';
+import '../providers/documents_provider.dart'; // Our import for documents_provider
+import '../models/user.dart'; // Our import for AppUser model
 
-class UserSelectorModal extends ConsumerStatefulWidget {
+class UserSelectorModal extends ConsumerStatefulWidget { // This is correct, it extends ConsumerStatefulWidget
   final List<String> initialSelectedUserIds;
   final Function(List<String>) onSelectionChanged;
 
@@ -13,9 +14,11 @@ class UserSelectorModal extends ConsumerStatefulWidget {
   });
 
   @override
+  // CRITICAL FIX: The state class MUST extend ConsumerState<UserSelectorModal>
   ConsumerState<UserSelectorModal> createState() => _UserSelectorModalState();
 }
 
+// CRITICAL FIX: This class definition MUST extend ConsumerState<UserSelectorModal>
 class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
   late Set<String> selectedUserIds;
   String searchQuery = '';
@@ -23,12 +26,13 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
   @override
   void initState() {
     super.initState();
-    selectedUserIds = Set.from(widget.initialSelectedUserIds);
+    selectedUserIds = Set.from(widget.initialSelectedUserIds); // 'widget' is now available
   }
 
   @override
   Widget build(BuildContext context) {
-    final allUsersAsyncValue = ref.watch(allUsersProvider);
+    // 'ref' is now available because it's a ConsumerState
+    final allUsersAsyncValue = ref.watch(allUsersProvider); 
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -66,7 +70,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               onChanged: (value) {
-                setState(() {
+                setState(() { // 'setState' is now available
                   searchQuery = value.toLowerCase();
                 });
               },
@@ -85,7 +89,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                   '${selectedUserIds.length} user${selectedUserIds.length == 1 ? '' : 's'} selected',
                   style: TextStyle(
                     color: Colors.blue.shade700,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -109,7 +113,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                           Icon(Icons.people_outline, size: 64, color: Colors.grey.shade400),
                           const SizedBox(height: 16),
                           Text(
-                            searchQuery.isEmpty ? 'No users found' : 'No users match your search',
+                            searchQuery.isEmpty ? 'No users found' : 'No users match our search',
                             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                           ),
                         ],
@@ -128,7 +132,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                         child: CheckboxListTile(
                           value: isSelected,
                           onChanged: (bool? value) {
-                            setState(() {
+                            setState(() { // 'setState' is now available
                               if (value == true) {
                                 selectedUserIds.add(user.uid);
                               } else {
@@ -188,7 +192,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
             
             const SizedBox(height: 16),
             
-            // Action buttons
+            // Our Action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -199,7 +203,7 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    widget.onSelectionChanged(selectedUserIds.toList());
+                    widget.onSelectionChanged(selectedUserIds.toList()); // 'widget' is now available
                     Navigator.of(context).pop();
                   },
                   child: const Text('Apply Selection'),
@@ -211,4 +215,4 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
       ),
     );
   }
-} 
+}

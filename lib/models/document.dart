@@ -14,7 +14,7 @@ class Document {
   final bool isScreenshotAllowed; 
   final String? shareId;          
   final bool isPubliclyShared;
-  final List<String> sharedWith;
+  final List<String> sharedWith; // Our new sharedWith field
 
   Document({
     required this.id,
@@ -30,10 +30,10 @@ class Document {
     this.isScreenshotAllowed = true,
     this.shareId,
     this.isPubliclyShared = false,
-    this.sharedWith = const [],
+    this.sharedWith = const [], // Initialize as empty list
   });
 
-  // Factory constructor to create a Document from a Firestore DocumentSnapshot
+  // Our factory constructor to create a Document from a Firestore DocumentSnapshot
   factory Document.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
     if (data == null) {
@@ -54,11 +54,11 @@ class Document {
       isScreenshotAllowed: data['isScreenshotAllowed'] as bool? ?? true,
       shareId: data['shareId'] as String?,
       isPubliclyShared: data['isPubliclyShared'] as bool? ?? false,
-      sharedWith: List<String>.from(data['sharedWith'] ?? []),
+      sharedWith: List<String>.from(data['sharedWith'] ?? []), // Parse sharedWith
     );
   }
 
-  // Helper to parse expiry date from Firestore data (can be Timestamp or String for backward compatibility)
+  // Our helper to parse expiry date from Firestore data
   static DateTime _parseExpiryDate(dynamic expiryData) {
     if (expiryData is Timestamp) {
       return expiryData.toDate();
@@ -79,7 +79,7 @@ class Document {
     return DateTime.now();
   }
 
-  // Method to convert a Document object to a Map for Firestore
+  // Our method to convert a Document object to a Map for Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -94,11 +94,11 @@ class Document {
       'isScreenshotAllowed': isScreenshotAllowed,
       'shareId': shareId,
       'isPubliclyShared': isPubliclyShared,
-      'sharedWith': sharedWith,
+      'sharedWith': sharedWith, // Including sharedWith in Firestore map
     };
   }
 
-  // copyWith method
+  // Our copyWith method
   Document copyWith({
     String? id,
     String? userId,
@@ -113,7 +113,7 @@ class Document {
     bool? isScreenshotAllowed,
     String? shareId,
     bool? isPubliclyShared,
-    List<String>? sharedWith,
+    List<String>? sharedWith, // Including in copyWith
   }) {
     return Document(
       id: id ?? this.id,
@@ -129,8 +129,7 @@ class Document {
       isScreenshotAllowed: isScreenshotAllowed ?? this.isScreenshotAllowed,
       shareId: shareId ?? this.shareId,
       isPubliclyShared: isPubliclyShared ?? this.isPubliclyShared,
-      sharedWith: sharedWith ?? this.sharedWith,
-
+      sharedWith: sharedWith ?? this.sharedWith, // Including in copyWith
     );
   }
 }
