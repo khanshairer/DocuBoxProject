@@ -4,8 +4,8 @@ import '../providers/documents_provider.dart';
 import '../providers/auth_state_provider.dart';
 import '../models/document.dart';
 // CORRECTED IMPORT PATH: Now importing from the consolidated widgets folder
-import '../widgets/homepage_menu_bar_widget.dart'; 
-import 'shared_document_viewer_page.dart';
+import '../widgets/homepage_menu_bar_widget.dart';
+import 'shared_document_viewer_page.dart'; // Assuming this page exists for viewing
 
 class SharedDocumentsPage extends ConsumerWidget {
   const SharedDocumentsPage({super.key});
@@ -24,7 +24,10 @@ class SharedDocumentsPage extends ConsumerWidget {
         elevation: 2,
       ),
       // Only show drawer if user is logged in
-      drawer: user != null ? HomePageMenuBar(authNotifier: authNotifier, currentUser: user) : null,
+      drawer:
+          user != null
+              ? HomePageMenuBar(authNotifier: authNotifier, currentUser: user)
+              : null,
       body: sharedDocumentsAsyncValue.when(
         data: (documents) {
           if (documents.isEmpty) {
@@ -35,9 +38,7 @@ class SharedDocumentsPage extends ConsumerWidget {
             itemCount: documents.length,
             itemBuilder: (context, index) {
               final document = documents[index];
-              // Using SharedDocumentCard if you have one, or DocumentCard as a placeholder
-              // If SharedDocumentCard is in lib/widgets, ensure it's imported correctly.
-              return SharedDocumentCard(document: document); 
+              return SharedDocumentCard(document: document);
             },
           );
         },
@@ -62,7 +63,11 @@ class SharedDocumentsPage extends ConsumerWidget {
             const SizedBox(height: 20),
             Text(
               'No shared documents yet!',
-              style: TextStyle(fontSize: 22, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 22,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
@@ -78,11 +83,9 @@ class SharedDocumentsPage extends ConsumerWidget {
   }
 }
 
-// NOTE: SharedDocumentCard is a custom widget. Ensure this is defined
-// either within this file (SharedDocumentsPage) or, preferably,
-// extracted into its own file in lib/widgets/ and imported.
-// I'm including a basic version here based on your previous shared code,
-// but it should be moved to lib/widgets/shared_document_card.dart if it's not already.
+// SharedDocumentCard implementation
+// NOTE: This should ideally be in its own file like lib/widgets/shared_document_card.dart
+// and imported, but kept here as per your provided code for direct modification.
 class SharedDocumentCard extends StatelessWidget {
   final Document document;
   const SharedDocumentCard({super.key, required this.document});
@@ -102,18 +105,29 @@ class SharedDocumentCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.share, color: Theme.of(context).colorScheme.primary),
+                  Icon(
+                    Icons.share,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      document.name.isNotEmpty ? document.name : 'Untitled Document',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      document.name.isNotEmpty
+                          ? document.name
+                          : 'Untitled Document',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade100,
                       borderRadius: BorderRadius.circular(12),
@@ -144,57 +158,79 @@ class SharedDocumentCard extends StatelessWidget {
                 'Expires: ${document.expiryDate.day.toString().padLeft(2, '0')}/${document.expiryDate.month.toString().padLeft(2, '0')}/${document.expiryDate.year}',
                 style: TextStyle(
                   fontSize: 14,
-                  color: document.expiryDate.isBefore(DateTime.now()) ? Colors.red : Colors.green.shade700,
+                  color:
+                      document.expiryDate.isBefore(DateTime.now())
+                          ? Colors.red
+                          : Colors.green.shade700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 12),
+              // FIX: Use Wrap for tags and Spacer for positioning the button
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment:
+                    CrossAxisAlignment
+                        .end, // Align contents to the bottom if they wrap
                 children: [
-                  Row(
-                    children: [
-                      if (!document.isDownloadable)
-                        Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'No Download',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.red.shade700,
-                              fontWeight: FontWeight.w500,
+                  Expanded(
+                    // Use Expanded to give the Wrap space
+                    child: Wrap(
+                      spacing: 8.0, // Horizontal space between tags
+                      runSpacing: 4.0, // Vertical space between lines of tags
+                      children: [
+                        if (!document.isDownloadable)
+                          Container(
+                            margin: const EdgeInsets.only(
+                              right: 0,
+                            ), // Removed right margin as Wrap handles spacing
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'No Download',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                      if (!document.isScreenshotAllowed)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'No Screenshots',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.orange.shade700,
-                              fontWeight: FontWeight.w500,
+                        if (!document.isScreenshotAllowed)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'No Screenshots',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.orange.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
+                  // Spacer pushes the button to the right
+                  Spacer(),
                   TextButton.icon(
                     onPressed: () {
-                      // Ensure SharedDocumentViewerPage is a GoRoute or handled correctly
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => SharedDocumentViewerPage(document: document),
+                          builder:
+                              (context) =>
+                                  SharedDocumentViewerPage(document: document),
                         ),
                       );
                     },

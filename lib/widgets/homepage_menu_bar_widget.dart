@@ -63,7 +63,7 @@ class HomePageMenuBar extends StatelessWidget {
           // Home option (My Documents) - consistent with Home Page
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Home (My Documents)'), // Clearer label
+            title: const Text('Home'), // Clearer label
             onTap: () {
               Navigator.pop(context); // Close the drawer
               context.go('/'); // Navigating to Home (root path)
@@ -93,7 +93,9 @@ class HomePageMenuBar extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
-              context.push('/profile'); // Using context.push, path is now /profile
+              context.push(
+                '/profile',
+              ); // Using context.push, path is now /profile
             },
           ),
           // Settings option - changed to push for consistent stack

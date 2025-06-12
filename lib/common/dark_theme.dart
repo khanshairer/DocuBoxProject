@@ -109,17 +109,13 @@ class DarkTheme {
       ),
 
       // FIX 2: Changed CardTheme to CardThemeData
-      cardTheme: CardThemeData(
-        // <--- FIXED HERE (removed const, as CardThemeData is not const itself)
-        color: _darkSurface, // Use dark surface color for cards
+      cardTheme: CardTheme(
+        color: _darkSurface,
         elevation: 2,
-        margin: const EdgeInsets.all(8), // Add const to EdgeInsets
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          side: BorderSide(
-            color: Colors.white,
-            width: 1.0,
-          ), // Added white border
+        margin: const EdgeInsets.all(8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Colors.white, width: 1.0),
         ),
       ),
 
