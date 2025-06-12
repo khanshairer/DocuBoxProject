@@ -46,9 +46,10 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Select Users to Share With',
+                  'Select Users',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 IconButton(
@@ -171,64 +172,99 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                       final user = filteredUsers[index];
                       final isSelected = selectedUserIds.contains(user.uid);
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        color: Theme.of(context).colorScheme.surface,
+                      return Container(
+                        margin: const EdgeInsets.only(top: 26),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color.fromARGB(
+                                      51,
+                                      255,
+                                      255,
+                                      255,
+                                    ) // 20% white
+                                    : const Color.fromARGB(
+                                      153,
+                                      33,
+                                      150,
+                                      243,
+                                    ), // 60% blue (#2196F3)
+                            width: 1.5,
+                          ),
+                        ),
                         child: SizedBox(
-                          height:
-                              72.0, // Adjust this value as needed for desired height
-                          child: CheckboxListTile(
-                            value: isSelected,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                if (value == true) {
-                                  selectedUserIds.add(user.uid);
-                                } else {
-                                  selectedUserIds.remove(user.uid);
-                                }
-                              });
-                            },
-                            title: Text(
-                              user.displayName?.isNotEmpty == true
-                                  ? user.displayName!
-                                  : user.email,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                            subtitle:
+                          height: 122,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: CheckboxListTile(
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedUserIds.add(user.uid);
+                                  } else {
+                                    selectedUserIds.remove(user.uid);
+                                  }
+                                });
+                              },
+                              title: Text(
                                 user.displayName?.isNotEmpty == true
-                                    ? Text(
-                                      user.email,
-                                      // FIX: Use withAlpha
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withAlpha((255 * 0.7).round()),
-                                      ),
-                                    )
-                                    : null,
-                            secondary: CircleAvatar(
-                              // FIX: Use withAlpha
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withAlpha((255 * 0.2).round()),
-                              child: Text(
-                                (user.displayName?.isNotEmpty == true
-                                        ? user.displayName![0]
-                                        : user.email[0])
-                                    .toUpperCase(),
+                                    ? user.displayName!
+                                    : user.email,
                                 style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.onPrimary,
                                   fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 16,
                                 ),
                               ),
+                              subtitle:
+                                  user.displayName?.isNotEmpty == true
+                                      ? Text(
+                                        user.email,
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withAlpha(178), // ~70% opacity
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      )
+                                      : null,
+                              secondary: CircleAvatar(
+                                backgroundColor:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color.fromARGB(
+                                          51,
+                                          25,
+                                          118,
+                                          210,
+                                        ) // 20% #1976D2
+                                        : const Color.fromARGB(
+                                          51,
+                                          33,
+                                          150,
+                                          243,
+                                        ), // 20% #2196F3
+                                child: Text(
+                                  (user.displayName?.isNotEmpty == true
+                                          ? user.displayName![0]
+                                          : user.email[0])
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
                             ),
-                            controlAffinity: ListTileControlAffinity.leading,
                           ),
                         ),
                       );
