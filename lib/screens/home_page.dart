@@ -33,11 +33,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
-  // Added: Method to navigate to the DocumentUploadPage using GoRouter
-  void _navigateToUpload(BuildContext context) {
-    context.push('/document-upload');
-  }
-
   @override
   Widget build(BuildContext context) {
     final authNotifier = ref.watch(authStateProvider);
@@ -135,7 +130,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       floatingActionButton: FloatingActionButton(
         // Edited: Changed context.go to _navigateToUpload method call for consistency
         onPressed: () {
-          _navigateToUpload(context); // Use the new method
+          context.go('/document-upload'); // Use the new method
         },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -171,7 +166,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: 30),
             // Added: ElevatedButton to the empty state for direct upload
             ElevatedButton.icon(
-              onPressed: () => _navigateToUpload(context),
+              onPressed: () => context.go('/document-upload'),
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload Document'),
               style: ElevatedButton.styleFrom(
