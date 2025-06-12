@@ -35,7 +35,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   // Added: Method to navigate to the DocumentUploadPage using GoRouter
   void _navigateToUpload(BuildContext context) {
-    context.push('/document-upload'); 
+    context.push('/document-upload');
   }
 
   @override
@@ -46,20 +46,12 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     // Edited: Added a Scaffold and CircularProgressIndicator for null user
     if (user == null) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
-        // Added: AppBar styling properties
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        elevation: 2,
         actions: [
           IconButton(
             onPressed: () {
@@ -182,7 +174,10 @@ class _HomePageState extends ConsumerState<HomePage> {
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload Document'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
