@@ -112,11 +112,11 @@ class DarkTheme {
         // <--- FIXED HERE: Used CardThemeData AND added const
         color: _darkSurface, // Use dark surface color for cards
         elevation: 2,
-        margin: const EdgeInsets.all(8), // <--- FIXED HERE: Added const
-        shape: const RoundedRectangleBorder(
+        margin: EdgeInsets.all(8), // <--- FIXED HERE: Added const
+        shape: RoundedRectangleBorder(
           // <--- FIXED HERE: Added const to RoundedRectangleBorder
           borderRadius: BorderRadius.all(
-            const Radius.circular(12),
+            Radius.circular(12),
           ), // <--- FIXED HERE: Added const to Radius.circular
           side: BorderSide(
             color: Colors.white,
