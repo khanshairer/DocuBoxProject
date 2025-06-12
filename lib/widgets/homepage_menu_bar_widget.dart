@@ -145,7 +145,6 @@ class HomePageMenuBar extends ConsumerWidget {
             ),
             onTap: () {
               if (context.mounted) {
-                Navigator.pop(context);
                 context.go('/document_upload');
               }
             },

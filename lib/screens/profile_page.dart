@@ -5,9 +5,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/profile_image_provider.dart'; // Ensure this path is correct
+import '../providers/profile_image_provider.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/homepage_menu_bar_widget.dart'; // Ensure this path is correct
+import '../widgets/homepage_menu_bar_widget.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -39,37 +39,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Listen for auth state changes to ensure _currentUser is always up-to-date
-    // and data loading happens when the user is truly logged in.
-    FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (mounted) {
-        setState(() {
-          _currentUser = user;
-          if (user != null) {
-            _loadUserData(); // Load data only when a user is logged in
-          } else {
-            // User is logged out, clear data or navigate to login
-            _bioController.clear();
-            _usernameController.clear();
-            _emailController.clear();
-            _currentImageUrl = null;
-            _profileImage = null;
-            _memberSince = null;
-            _isLoading = false; // Stop loading if user logs out
-          }
-        });
-      }
-    });
-    // Initial load if user is already signed in on app start
-    if (FirebaseAuth.instance.currentUser != null) {
-      _loadUserData();
-    }
+    _currentUser = FirebaseAuth.instance.currentUser;
+    _loadUserData();
   }
 
   /// Loads user data (username, email, bio, profile image) from Firebase Auth and Firestore.
   Future<void> _loadUserData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true; // Show loading indicator
+    });
+
+    _currentUser = FirebaseAuth.instance.currentUser;
     if (_currentUser == null) {
-      // If no current user, don't attempt to load data
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -78,13 +60,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       return;
     }
 
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true; // Show loading indicator
-    });
-
+    // Populate email controller (read-only), will not be saved back directly
     _emailController.text = _currentUser!.email ?? 'N/A';
 
+    // Set member since date
     if (_currentUser!.metadata.creationTime != null) {
       _memberSince =
           '${_currentUser!.metadata.creationTime!.day}/${_currentUser!.metadata.creationTime!.month}/${_currentUser!.metadata.creationTime!.year}';
@@ -102,7 +81,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (userDoc.exists) {
         final userData = userDoc.data();
         if (userData != null) {
+          // Fetch and populate bio and username from Firestore if they exist
           _bioController.text = userData['bio'] ?? '';
+          // Prioritize Firestore username, then Firebase Auth displayName, then an empty string
           _usernameController.text =
               userData['username'] ?? _currentUser!.displayName ?? '';
           if (mounted) {
@@ -111,6 +92,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             });
           }
         }
+      } else {
+        // If user document doesn't exist, try populating from Firebase Auth display name
+        _usernameController.text = _currentUser!.displayName ?? '';
       }
     } catch (e) {
       if (mounted) {
@@ -120,8 +104,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
     } finally {
       if (mounted) {
-        // Update Riverpod provider for profile image across the app
-        ref.read(profileImageProvider.notifier).updateImage(_currentImageUrl);
+        // Update the global profile image provider after loading
+        ref.read(profileImageProvider).updateImage(_currentImageUrl);
         setState(() {
           _isLoading = false; // Hide loading indicator
         });
@@ -139,17 +123,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
 
     try {
+      // Save username and bio to Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(_currentUser!.uid)
-          .set({
-            'username': _usernameController.text.trim(),
-            'bio': _bioController.text.trim(),
-            'email': _currentUser!.email,
-            'lastUpdated': FieldValue.serverTimestamp(),
-            'imageUrl': _currentImageUrl,
-          }, SetOptions(merge: true));
+          .set(
+            {
+              'username': _usernameController.text.trim(),
+              'bio': _bioController.text.trim(),
+              'email': _currentUser!.email, // Keep email updated in Firestore
+              'lastUpdated': FieldValue.serverTimestamp(),
+              'imageUrl': _currentImageUrl, // Ensure image URL is also saved
+            },
+            SetOptions(merge: true), // Merge to avoid overwriting other fields
+          );
 
+      // Update Firebase Auth display name if username changed
       if (_currentUser!.displayName != _usernameController.text.trim()) {
         await _currentUser!.updateDisplayName(_usernameController.text.trim());
       }
@@ -159,17 +148,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           const SnackBar(content: Text('Profile updated successfully!')),
         );
       }
-    } on FirebaseException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile: ${e.message}')),
-        );
-      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
       }
     } finally {
       if (mounted) {
@@ -188,7 +171,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
 
     try {
-      final image = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image == null) {
         if (mounted) {
           setState(() {
@@ -201,7 +184,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (_currentUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No user logged in to upload image.')),
+            const SnackBar(
+              content: Text('Error: No user logged in to upload image.'),
+            ),
           );
           setState(() {
             _isLoading = false;
@@ -210,6 +195,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         return;
       }
 
+      // FIX: Ensure _profileImage is set from the XFile path
       if (mounted) {
         setState(() => _profileImage = File(image.path));
       }
@@ -217,6 +203,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final storageRef = FirebaseStorage.instance.ref().child(
         'profile-pictures/${_currentUser!.uid}.jpg',
       );
+
+      // Check if _profileImage is null before attempting to upload
+      if (_profileImage == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Selected image file is null.'),
+            ),
+          );
+          setState(() {
+            _isLoading = false;
+          });
+        }
+        return;
+      }
 
       await storageRef.putFile(_profileImage!);
       final downloadUrl = await storageRef.getDownloadURL();
@@ -227,28 +228,44 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           .set({'imageUrl': downloadUrl}, SetOptions(merge: true));
 
       if (mounted) {
-        ref.read(profileImageProvider.notifier).updateImage(downloadUrl);
+        ref.read(profileImageProvider).updateImage(downloadUrl);
         setState(() {
-          _currentImageUrl = downloadUrl;
+          _currentImageUrl = downloadUrl; // Update the stored URL
+          _profileImage = null; // Clear the local file reference AFTER upload
         });
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture updated!')),
+          const SnackBar(
+            content: Text('Profile picture updated successfully!'),
+          ),
         );
       }
     } on FirebaseException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading image: ${e.message}')),
-        );
-      }
-    } catch (e) {
+      // Catch Firebase specific exceptions
+      print(
+        'Firebase Storage Error during upload: ${e.code} - ${e.message}',
+      ); // Log error to console
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('An unexpected error occurred: ${e.toString()}'),
+            content: Text(
+              'Upload failed: ${e.message ?? e.code}. Check permissions.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('General Error during image pick/upload: $e'); // Log other errors
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'An unexpected error occurred during upload: ${e.toString()}',
+            ),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -271,6 +288,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
 
     try {
+      // Only attempt to delete from storage if it's a Firebase Storage URL
       if (_currentImageUrl != null &&
           _currentImageUrl!.startsWith(
             'https://firebasestorage.googleapis.com/',
@@ -284,17 +302,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(_currentUser!.uid)
-          .update({'imageUrl': FieldValue.delete()});
+          .update({
+            'imageUrl':
+                FieldValue.delete(), // Remove imageUrl field from Firestore
+          });
 
       if (mounted) {
         setState(() {
-          _profileImage = null;
-          _currentImageUrl = null;
+          _profileImage = null; // Clear local file reference
+          _currentImageUrl = null; // Clear the stored URL
         });
       }
 
       if (mounted) {
-        ref.read(profileImageProvider.notifier).updateImage(null);
+        ref.read(profileImageProvider).updateImage(null); // Notify global state
       }
 
       if (mounted) {
@@ -303,81 +324,26 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } on FirebaseException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to remove image: ${e.message}')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An unexpected error occurred: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false; // Hide loading indicator
-        });
-      }
-    }
-  }
-
-  /// Handles user signing out.
-  Future<void> _signOut() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true; // Show loading indicator for sign out
-    });
-    try {
-      // Show confirmation dialog
-      final bool? confirmSignOut = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext dialogContext) {
-          return AlertDialog(
-            title: const Text('Sign Out'),
-            content: const Text('Are you sure you want to sign out?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(
-                    dialogContext,
-                  ).pop(false); // Dismiss dialog, return false
-                },
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(
-                    dialogContext,
-                  ).pop(true); // Dismiss dialog, return true
-                },
-                child: const Text('Sign Out'),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (confirmSignOut == true) {
-        await FirebaseAuth.instance.signOut();
-        // Clear Riverpod state after sign out
-        ref.read(profileImageProvider.notifier).updateImage(null);
-        // Navigate to the root or login page after sign out
-        if (mounted) {
-          context.go('/'); // Assuming '/' is your login/landing page
-        }
-      }
-    } on FirebaseAuthException catch (e) {
+      // Catch Firebase specific exceptions
+      print(
+        'Firebase Storage Error during remove: ${e.code} - ${e.message}',
+      ); // Log error to console
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error signing out: ${e.message}')),
+          SnackBar(
+            content: Text(
+              'Remove failed: ${e.message ?? e.code}. Check permissions.',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: $e')),
-        );
-      }
+      print('General Error during image removal: $e'); // Log other errors
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to remove image: ${e.toString()}')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -505,7 +471,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           },
         ),
         actions: [
-          // Show save/edit button only if not loading
           if (!_isLoading)
             IconButton(
               icon: Icon(_isEditing ? Icons.save : Icons.edit),
@@ -532,10 +497,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
         ],
       ),
-      // Drawer is built here
-      drawer: HomePageMenuBar(), // Removed const
+      drawer: const HomePageMenuBar(),
       body:
-          _isLoading // Show a full-page loading indicator if _isLoading is true
+          _isLoading
               ? Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
@@ -548,15 +512,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .center, // Center children horizontally
                     children: [
                       const SizedBox(height: 20),
                       Stack(
-                        alignment:
-                            Alignment
-                                .bottomRight, // Align children of Stack to bottom-right
+                        alignment: Alignment.bottomRight,
                         children: [
                           Container(
                             width: 150,
@@ -605,7 +564,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                       ),
                             ),
                           ),
-                          // Only show camera button if editing and not loading
                           if (_isEditing && !_isLoading)
                             Container(
                               padding: const EdgeInsets.all(8),
@@ -623,7 +581,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             ),
                         ],
                       ),
-                      // Only show remove button if editing, image exists, and not loading
                       if (_isEditing &&
                           (_profileImage != null || _currentImageUrl != null) &&
                           !_isLoading)
@@ -638,7 +595,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       Text(
                         _usernameController.text.isNotEmpty
                             ? _usernameController.text
-                            : 'No Username',
+                            : 'No Username Set',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -654,32 +611,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           _buildFormField(
                             label: "Bio",
                             controller: _bioController,
-                            enabled:
-                                _isEditing &&
-                                !_isLoading, // Disable during loading
-                            maxLines: 3, // Allow multiple lines for bio
+                            initialValue: _bioController.text,
+                            enabled: _isEditing && !_isLoading,
+                            maxLines: 3,
                           ),
                           const SizedBox(height: 20),
                           _buildFormField(
                             label: "Username",
                             controller: _usernameController,
-                            enabled:
-                                _isEditing &&
-                                !_isLoading, // Disable during loading
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Username cannot be empty';
-                              }
-                              return null;
-                            },
+                            initialValue: _usernameController.text,
+                            enabled: _isEditing && !_isLoading,
                           ),
                           const SizedBox(height: 20),
                           _buildFormField(
                             label: "Email",
                             controller: _emailController,
-                            readOnly: true, // Email is read-only
-                            enabled:
-                                false, // Always disabled for editing via profile page
+                            initialValue: _emailController.text,
+                            readOnly: true,
+                            enabled: false,
                           ),
                           const SizedBox(height: 20),
                           _buildReadOnlyField(
@@ -687,7 +636,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             value: _memberSince ?? 'N/A',
                           ),
                           const SizedBox(height: 20),
-                          // "Change Password" button
                           if (!_showPasswordFields && _isEditing && !_isLoading)
                             Center(
                               child: TextButton(
@@ -700,7 +648,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 ),
                               ),
                             ),
-                          // Password fields
                           if (_showPasswordFields) ...[
                             _buildPasswordField(
                               label: "Current Password",
@@ -740,9 +687,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               children: [
                                 ElevatedButton(
                                   onPressed:
-                                      _isLoading
-                                          ? null
-                                          : _togglePasswordFields, // Disable during loading
+                                      _isLoading ? null : _togglePasswordFields,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: colorScheme.surface,
                                     foregroundColor: colorScheme.onSurface,
@@ -751,9 +696,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 ),
                                 ElevatedButton(
                                   onPressed:
-                                      _isLoading
-                                          ? null
-                                          : _changePassword, // Disable during loading
+                                      _isLoading ? null : _changePassword,
                                   child: const Text('Save Password'),
                                 ),
                               ],
@@ -761,32 +704,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
                       Divider(thickness: 2, color: colorScheme.primary),
-                      const SizedBox(height: 30),
-                      // Sign out button
-                      ElevatedButton.icon(
-                        onPressed:
-                            _isLoading
-                                ? null
-                                : _signOut, // Disable during loading
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Sign Out'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              colorScheme.error, // Use error color for signOut
-                          foregroundColor: colorScheme.onError,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 30,
-                            vertical: 15,
-                          ),
-                          textStyle: const TextStyle(fontSize: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20), // Spacing at the bottom
                     ],
                   ),
                 ),
@@ -794,15 +713,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  // Helper widget to build form fields (username, bio)
   Widget _buildFormField({
     required String label,
     required TextEditingController controller,
+    required String initialValue,
     bool readOnly = false,
     bool enabled = true,
-    int maxLines = 1, // Default to single line
-    String? Function(String?)? validator,
+    int? maxLines = 1,
   }) {
+    if (controller.text.isEmpty && initialValue.isNotEmpty) {
+      controller.text = initialValue;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -819,9 +741,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           controller: controller,
           readOnly: readOnly || !enabled,
           enabled: enabled,
-          maxLines: maxLines, // Apply maxLines
-          validator: validator, // Apply validator
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          maxLines: maxLines,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -856,7 +777,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  // Helper widget to build password fields
   Widget _buildPasswordField({
     required String label,
     required TextEditingController controller,
@@ -878,7 +798,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           controller: controller,
           obscureText: true,
           validator: validator,
-          enabled: !_isLoading, // Disable during loading
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             border: OutlineInputBorder(
@@ -914,7 +833,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  // Helper widget to build read-only fields
   Widget _buildReadOnlyField({required String label, required String value}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
