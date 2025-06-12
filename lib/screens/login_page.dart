@@ -132,7 +132,10 @@ class _LoginPageState extends State<LoginPage> {
               ),
             TextButton(
               child: const Text("Don't have an account? Sign Up"),
-              onPressed: () => context.go('/sign-up'),
+              onPressed: () {
+                final router = GoRouter.of(context);
+                router.go('/sign-up');
+              },
             ),
           ],
         ),
