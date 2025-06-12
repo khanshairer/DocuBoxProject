@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/material.dart'; // We need this import for Scaffold and AppBar
+import 'package:flutter/material.dart';
 
 import '../screens/home_page.dart';
 import '../screens/login_page.dart';
@@ -8,9 +8,9 @@ import '../providers/auth_state_provider.dart';
 import '../screens/welcome_page.dart';
 import '../screens/document_upload_page.dart';
 import '../screens/profile_page.dart';
-import '../screens/shared_documents_page.dart'; // We're importing SharedDocumentsPage here
+import '../screens/shared_documents_page.dart';
+import '../screens/settings_page.dart';
 
-// This is our appRouterProvider, a Riverpod Provider that returns a GoRouter instance.
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
 
@@ -39,57 +39,69 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DocumentUploadPage(),
       ),
       GoRoute(
-        path: '/profile', // Our consistent path for the profile screen
+        path: '/profile',
         name: 'profile',
-        builder: (context, state) => const ProfilePage(), // Using our actual ProfilePage
+        builder: (context, state) => const ProfilePage(),
       ),
       GoRoute(
         path: '/shared-documents',
         name: 'shared-documents',
         builder: (context, state) => const SharedDocumentsPage(),
       ),
-      // Our placeholder routes for settings and chat, wrapped in Scaffold with const Text
       GoRoute(
         path: '/settings',
         name: 'settings',
-        builder: (context, state) => Scaffold( // Removed const from Scaffold because AppBar is not const
-          appBar: AppBar(title: const Text('Settings')), // Keeping const on Text
-          body: const Center(child: Text('Settings Page Placeholder')), // Keeping const on Text
-        ),
+        builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
         path: '/chat',
         name: 'chat',
-        builder: (context, state) => Scaffold( // Removed const from Scaffold because AppBar is not const
-          appBar: AppBar(title: const Text('Chat')), // Keeping const on Text
-          body: const Center(child: Text('Chat Page Placeholder')), // REMOVED UNNECESSARY CONST HERE
-        ),
+        builder:
+            (context, state) => Scaffold(
+              appBar: AppBar(title: const Text('Chat')),
+              body: const Center(child: Text('Chat Page Placeholder')),
+            ),
       ),
-      // If '/see-document' is intended to be a viewer for a specific document,
-      // its builder should navigate to SharedDocumentViewerPage or similar, passing the document ID.
-      // For now, we're keeping it pointing to HomePage.
       GoRoute(
         path: '/see-document',
         name: 'see-document',
-        builder: (context, state) => const HomePage(), 
+        builder: (context, state) => const HomePage(),
       ),
     ],
+    errorBuilder:
+        (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Error')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Page Not Found',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'The requested page could not be found',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text('Return to Home'),
+                ),
+              ],
+            ),
+          ),
+        ),
     redirect: (context, state) {
       final bool loggedIn = authNotifier.currentUser != null;
-      
-      // Our list of routes that do NOT require authentication
       const List<String> publicRoutes = ['/welcome', '/login'];
-
-      // Checking if the current location is one of the public routes
       final bool isPublicRoute = publicRoutes.contains(state.matchedLocation);
 
-      // If not logged in AND trying to access a protected route (not a public route), we are redirecting to /welcome
       if (!loggedIn && !isPublicRoute) return '/welcome';
-      
-      // If logged in AND trying to access a public route, we are redirecting to home
       if (loggedIn && isPublicRoute) return '/';
-      
-      // Otherwise, no redirect is needed.
       return null;
     },
   );
