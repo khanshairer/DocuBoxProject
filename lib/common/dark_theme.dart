@@ -174,6 +174,17 @@ class DarkTheme {
 
       // Icon theme
       iconTheme: const IconThemeData(color: _darkTextPrimary),
+
+      //Drawer Theme
+      drawerTheme: DrawerThemeData(
+        backgroundColor: _darkSurface, // Use your existing surface color
+        elevation: 8, // Subtle elevation
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.horizontal(right: Radius.circular(12)),
+        ),
+        width: 280, // Standard drawer width
+        scrimColor: Colors.black, // Pure black without opacity
+      ),
     );
   }
 }

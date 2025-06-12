@@ -4,8 +4,8 @@ import '../providers/documents_provider.dart';
 import '../providers/auth_state_provider.dart';
 import '../models/document.dart';
 // CORRECTED IMPORT PATH: Now importing from the consolidated widgets folder
-import '../widgets/homepage_menu_bar_widget.dart';
 import 'shared_document_viewer_page.dart'; // Assuming this page exists for viewing
+import 'package:go_router/go_router.dart';
 
 class SharedDocumentsPage extends ConsumerWidget {
   const SharedDocumentsPage({super.key});
@@ -19,15 +19,17 @@ class SharedDocumentsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shared Documents'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        elevation: 2,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Using pop() to go back to the previous screen in the GoRouter stack
+              context.go('/');
+            },
+            icon: const Icon(Icons.home),
+          ),
+        ],
       ),
-      // Only show drawer if user is logged in
-      drawer:
-          user != null
-              ? HomePageMenuBar(authNotifier: authNotifier, currentUser: user)
-              : null,
+
       body: sharedDocumentsAsyncValue.when(
         data: (documents) {
           if (documents.isEmpty) {

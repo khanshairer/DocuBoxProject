@@ -10,6 +10,7 @@ import '../screens/document_upload_page.dart';
 import '../screens/profile_page.dart';
 import '../screens/shared_documents_page.dart';
 import '../screens/settings_page.dart';
+import '../screens/signup_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
@@ -66,6 +67,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/see-document',
         name: 'see-document',
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: '/sign-up',
+        name: 'sign-up',
+        builder: (context, state) => const SignupPage(),
       ),
     ],
     errorBuilder:

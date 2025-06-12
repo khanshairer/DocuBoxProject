@@ -65,7 +65,6 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: const Text('Home'), // Clearer label
             onTap: () {
-              Navigator.pop(context); // Close the drawer
               context.go('/'); // Navigating to Home (root path)
             },
           ),
@@ -83,8 +82,7 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.share),
             title: const Text('Shared Documents'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/shared-documents'); // Using context.push
+              context.go('/shared-documents'); // Using context.push
             },
           ),
           // Profile option - changed to push for consistent stack & path
@@ -92,8 +90,7 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.person),
             title: const Text('Profile'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push(
+              context.go(
                 '/profile',
               ); // Using context.push, path is now /profile
             },
@@ -103,8 +100,7 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/settings'); // Using context.push
+              context.go('/settings'); // Using context.push
             },
           ),
           // Chat option - changed to push for consistent stack
@@ -112,8 +108,7 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.chat),
             title: const Text('Chat'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/chat'); // Using context.push
+              context.go('/chat'); // Using context.push
             },
           ),
 
@@ -123,7 +118,7 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
-              Navigator.pop(context); // Close the drawer
+              context.pop();
               await authNotifier.signOut();
             },
           ),

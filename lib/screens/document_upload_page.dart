@@ -5,11 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
 
 // Import from the new consolidated widgets folder
-import '../widgets/user_selector_modal.dart'; 
+import '../widgets/user_selector_modal.dart';
 // Removed unused go_router import as it's not directly used for navigation in this file
-// import 'package:go_router/go_router.dart'; 
+// import 'package:go_router/go_router.dart';
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -24,11 +25,12 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
   final _tagsController = TextEditingController();
-  
+
   bool _isDownloadable = true;
   bool _isScreenshotAllowed = true;
   bool _isPubliclyShared = false;
-  List<String> _sharedWith = []; // This will hold the UIDs of users to share with
+  List<String> _sharedWith =
+      []; // This will hold the UIDs of users to share with
 
   File? _selectedFile;
   Uint8List? _selectedFileBytes;
@@ -55,7 +57,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       if (result != null) {
         setState(() {
           _selectedFileName = result.files.single.name;
-          
+
           if (kIsWeb) {
             _selectedFileBytes = result.files.single.bytes;
             _selectedFile = null;
@@ -79,17 +81,18 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-    
+
     if (picked != null) {
       setState(() {
         // Consolidated: Set expiry controller text once
-        _expiryController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+        _expiryController.text =
+            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }
 
   Future<void> _uploadDocument() async {
-    if (!_formKey.currentState!.validate() || 
+    if (!_formKey.currentState!.validate() ||
         (_selectedFile == null && _selectedFileBytes == null)) {
       _showErrorSnackBar('Please fill all fields and select a file.');
       return;
@@ -125,7 +128,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
       // Consolidated: Single block for file name and storage reference logic
       String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      String safeFileName = _selectedFileName ?? 'unknown_file'; 
+      String safeFileName = _selectedFileName ?? 'unknown_file';
       String storageFileName = '${user.uid}_${timestamp}_$safeFileName';
       final storageRef = FirebaseStorage.instance.ref().child(
         'user_documents/${user.uid}/$storageFileName',
@@ -228,14 +231,15 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   void _showUserSelector() {
     showDialog(
       context: context,
-      builder: (context) => UserSelectorModal(
-        initialSelectedUserIds: _sharedWith,
-        onSelectionChanged: (selectedUserIds) {
-          setState(() {
-            _sharedWith = selectedUserIds;
-          });
-        },
-      ),
+      builder:
+          (context) => UserSelectorModal(
+            initialSelectedUserIds: _sharedWith,
+            onSelectionChanged: (selectedUserIds) {
+              setState(() {
+                _sharedWith = selectedUserIds;
+              });
+            },
+          ),
     );
   }
 
@@ -244,15 +248,11 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Upload Document'),
-        // Added AppBar styling properties
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        elevation: 2,
+
         actions: [
           IconButton(
             onPressed: () {
-              // Using pop() to go back to the previous screen in the GoRouter stack
-              Navigator.of(context).pop(); 
+              context.go('/');
             },
             icon: const Icon(Icons.home),
           ),
@@ -438,7 +438,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                       : '${_sharedWith.length} user${_sharedWith.length == 1 ? '' : 's'} selected',
                                 ),
                                 trailing: const Icon(Icons.arrow_forward_ios),
-                                onTap: _showUserSelector, // Call the method to show the user selector modal
+                                onTap:
+                                    _showUserSelector, // Call the method to show the user selector modal
                               ),
                             ],
                           ),
@@ -449,7 +450,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
                       // Removed duplicate "Sharing & Security Options" card here.
                       // Only one instance of this card is needed.
-
                       Card(
                         elevation: 4,
                         shape: RoundedRectangleBorder(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'signup_page.dart';
 import "home_page.dart";
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -107,7 +107,6 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8),
-                  color: Colors.white,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -116,7 +115,10 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(width: 10),
                     const Text(
                       'Sign in with Google',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -130,10 +132,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             TextButton(
               child: const Text("Don't have an account? Sign Up"),
-              onPressed:
-                  () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const SignupPage()),
-                  ),
+              onPressed: () => context.go('/sign-up'),
             ),
           ],
         ),
