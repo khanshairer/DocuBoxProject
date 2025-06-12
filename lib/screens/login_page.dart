@@ -24,7 +24,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _loginWithEmail() async {
     setState(() {
       error = '';
-      _isLoading = true;
     });
 
     try {
