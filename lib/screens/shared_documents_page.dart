@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/documents_provider.dart';
 import '../providers/auth_state_provider.dart';
 import '../models/document.dart';
-import '../widget/homepage_menu_bar_widget.dart';
+// CORRECTED IMPORT PATH: Now importing from the consolidated widgets folder
+import '../widgets/homepage_menu_bar_widget.dart'; 
 import 'shared_document_viewer_page.dart';
 
 class SharedDocumentsPage extends ConsumerWidget {
@@ -22,6 +23,7 @@ class SharedDocumentsPage extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 2,
       ),
+      // Only show drawer if user is logged in
       drawer: user != null ? HomePageMenuBar(authNotifier: authNotifier, currentUser: user) : null,
       body: sharedDocumentsAsyncValue.when(
         data: (documents) {
@@ -33,7 +35,9 @@ class SharedDocumentsPage extends ConsumerWidget {
             itemCount: documents.length,
             itemBuilder: (context, index) {
               final document = documents[index];
-              return SharedDocumentCard(document: document);
+              // Using SharedDocumentCard if you have one, or DocumentCard as a placeholder
+              // If SharedDocumentCard is in lib/widgets, ensure it's imported correctly.
+              return SharedDocumentCard(document: document); 
             },
           );
         },
@@ -74,9 +78,13 @@ class SharedDocumentsPage extends ConsumerWidget {
   }
 }
 
+// NOTE: SharedDocumentCard is a custom widget. Ensure this is defined
+// either within this file (SharedDocumentsPage) or, preferably,
+// extracted into its own file in lib/widgets/ and imported.
+// I'm including a basic version here based on your previous shared code,
+// but it should be moved to lib/widgets/shared_document_card.dart if it's not already.
 class SharedDocumentCard extends StatelessWidget {
   final Document document;
-
   const SharedDocumentCard({super.key, required this.document});
 
   @override
@@ -183,6 +191,7 @@ class SharedDocumentCard extends StatelessWidget {
                   ),
                   TextButton.icon(
                     onPressed: () {
+                      // Ensure SharedDocumentViewerPage is a GoRoute or handled correctly
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => SharedDocumentViewerPage(document: document),
@@ -200,4 +209,4 @@ class SharedDocumentCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

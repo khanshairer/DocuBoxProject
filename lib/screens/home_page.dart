@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_state_provider.dart';
-import '../widget/homepage_menu_bar_widget.dart';
-import '../providers/documents_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/auth_state_provider.dart';
+import '../widgets/homepage_menu_bar_widget.dart';
+import '../providers/documents_provider.dart';
 import '../widgets/document_card.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -33,15 +33,33 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.read(searchQueryProvider.notifier).state = _searchController.text;
   }
 
+  // Added: Method to navigate to the DocumentUploadPage using GoRouter
+  void _navigateToUpload(BuildContext context) {
+    context.push('/document-upload'); 
+  }
+
   @override
   Widget build(BuildContext context) {
     final authNotifier = ref.watch(authStateProvider);
     final user = authNotifier.currentUser;
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
+    // Edited: Added a Scaffold and CircularProgressIndicator for null user
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
+        // Added: AppBar styling properties
+        backgroundColor: Colors.blue.shade700,
+        foregroundColor: Colors.white,
+        elevation: 2,
         actions: [
           IconButton(
             onPressed: () {
@@ -63,10 +81,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search documents...',
-                prefixIcon: const Icon(Icons.search),
+                // Edited: Added color to prefixIcon
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 suffixIcon:
                     _searchController.text.isNotEmpty
                         ? IconButton(
+                          // Edited: Added color to clear icon
                           icon: const Icon(Icons.clear, color: Colors.white70),
                           onPressed: () {
                             _searchController.clear();
@@ -75,6 +95,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                         )
                         : null,
                 filled: true,
+                // Added: fillColor for search bar
+                fillColor: Colors.white24,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: BorderSide.none,
@@ -86,12 +108,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                 hintStyle: const TextStyle(color: Colors.white70),
                 labelStyle: const TextStyle(color: Colors.white),
               ),
+              // Kept: Original cursorColor as requested
               cursorColor: Colors.blue[900],
             ),
           ),
         ),
       ),
       drawer: HomePageMenuBar(authNotifier: authNotifier, currentUser: user),
+      // Edited: Wrapped body content in documentsAsyncValue.when for data handling
       body: documentsAsyncValue.when(
         data: (documents) {
           if (documents.isEmpty && _searchController.text.isEmpty) {
@@ -116,8 +140,9 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        // Edited: Changed context.go to _navigateToUpload method call for consistency
         onPressed: () {
-          context.go('/document-upload');
+          _navigateToUpload(context); // Use the new method
         },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -151,6 +176,18 @@ class _HomePageState extends ConsumerState<HomePage> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 30),
+            // Added: ElevatedButton to the empty state for direct upload
+            ElevatedButton.icon(
+              onPressed: () => _navigateToUpload(context),
+              icon: const Icon(Icons.upload_file),
+              label: const Text('Upload Document'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
           ],
         ),
       ),

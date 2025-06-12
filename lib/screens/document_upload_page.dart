@@ -5,8 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:go_router/go_router.dart';
-import '../../widgets/user_selector_modal.dart';
+
+// Import from the new consolidated widgets folder
+import '../widgets/user_selector_modal.dart'; 
+// Removed unused go_router import as it's not directly used for navigation in this file
+// import 'package:go_router/go_router.dart'; 
 
 class DocumentUploadPage extends StatefulWidget {
   const DocumentUploadPage({super.key});
@@ -21,11 +24,11 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
   final _typeController = TextEditingController();
   final _expiryController = TextEditingController();
   final _tagsController = TextEditingController();
-
+  
   bool _isDownloadable = true;
   bool _isScreenshotAllowed = true;
   bool _isPubliclyShared = false;
-  List<String> _sharedWith = [];
+  List<String> _sharedWith = []; // This will hold the UIDs of users to share with
 
   File? _selectedFile;
   Uint8List? _selectedFileBytes;
@@ -52,7 +55,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       if (result != null) {
         setState(() {
           _selectedFileName = result.files.single.name;
-
+          
           if (kIsWeb) {
             _selectedFileBytes = result.files.single.bytes;
             _selectedFile = null;
@@ -76,19 +79,17 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-
+    
     if (picked != null) {
       setState(() {
-        _expiryController.text =
-            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-        _expiryController.text =
-            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+        // Consolidated: Set expiry controller text once
+        _expiryController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }
 
   Future<void> _uploadDocument() async {
-    if (!_formKey.currentState!.validate() ||
+    if (!_formKey.currentState!.validate() || 
         (_selectedFile == null && _selectedFileBytes == null)) {
       _showErrorSnackBar('Please fill all fields and select a file.');
       return;
@@ -106,6 +107,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         return;
       }
 
+      // Consolidated: Parse expiry date once
       DateTime parsedExpiryDate;
       try {
         final parts = _expiryController.text.trim().split('/');
@@ -121,40 +123,11 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         return;
       }
 
+      // Consolidated: Single block for file name and storage reference logic
       String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      String fileName = '${timestamp}_$_selectedFileName';
-
-      // Upload file to Firebase Storage
-      late dynamic storageRef;
-      storageRef = FirebaseStorage.instance.ref().child('documents/$fileName');
-
-      String safeFileName = _selectedFileName ?? 'unknown_file';
+      String safeFileName = _selectedFileName ?? 'unknown_file'; 
       String storageFileName = '${user.uid}_${timestamp}_$safeFileName';
-
-      storageRef = FirebaseStorage.instance.ref().child(
-        'user_documents/${user.uid}/$storageFileName',
-      );
-
-      parsedExpiryDate;
-      try {
-        final parts = _expiryController.text.trim().split('/');
-        parsedExpiryDate = DateTime(
-          int.parse(parts[2]),
-          int.parse(parts[1]),
-          int.parse(parts[0]),
-        );
-      } catch (e) {
-        _showErrorSnackBar(
-          'Invalid expiry date format. Please use DD/MM/YYYY.',
-        );
-        return;
-      }
-
-      timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-      safeFileName = _selectedFileName ?? 'unknown_file';
-      storageFileName = '${user.uid}_${timestamp}_$safeFileName';
-
-      storageRef = FirebaseStorage.instance.ref().child(
+      final storageRef = FirebaseStorage.instance.ref().child(
         'user_documents/${user.uid}/$storageFileName',
       );
 
@@ -177,15 +150,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
+      // Consolidated: Single creation of tagsList
       List<String> tagsList =
-          _tagsController.text
-              .trim()
-              .split(',')
-              .map((tag) => tag.trim())
-              .where((tag) => tag.isNotEmpty)
-              .toList();
-
-      tagsList =
           _tagsController.text
               .trim()
               .split(',')
@@ -206,7 +172,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         'isScreenshotAllowed': _isScreenshotAllowed,
         'isPubliclyShared': _isPubliclyShared,
         'shareId': null,
-        'sharedWith': _sharedWith,
+        'sharedWith': _sharedWith, // Saved here
       });
 
       _showSuccessSnackBar('Document uploaded successfully!');
@@ -259,15 +225,34 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
     );
   }
 
+  void _showUserSelector() {
+    showDialog(
+      context: context,
+      builder: (context) => UserSelectorModal(
+        initialSelectedUserIds: _sharedWith,
+        onSelectionChanged: (selectedUserIds) {
+          setState(() {
+            _sharedWith = selectedUserIds;
+          });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Upload Document'),
+        // Added AppBar styling properties
+        backgroundColor: Colors.blue.shade700,
+        foregroundColor: Colors.white,
+        elevation: 2,
         actions: [
           IconButton(
             onPressed: () {
-              context.go('/');
+              // Using pop() to go back to the previous screen in the GoRouter stack
+              Navigator.of(context).pop(); 
             },
             icon: const Icon(Icons.home),
           ),
@@ -289,7 +274,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -454,22 +438,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                                       : '${_sharedWith.length} user${_sharedWith.length == 1 ? '' : 's'} selected',
                                 ),
                                 trailing: const Icon(Icons.arrow_forward_ios),
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder:
-                                        (context) => UserSelectorModal(
-                                          initialSelectedUserIds: _sharedWith,
-                                          onSelectionChanged: (
-                                            selectedUserIds,
-                                          ) {
-                                            setState(() {
-                                              _sharedWith = selectedUserIds;
-                                            });
-                                          },
-                                        ),
-                                  );
-                                },
+                                onTap: _showUserSelector, // Call the method to show the user selector modal
                               ),
                             ],
                           ),
@@ -478,81 +447,8 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
                       const SizedBox(height: 20),
 
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Sharing & Security Options',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue.shade700,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              SwitchListTile(
-                                title: const Text('Allow Download'),
-                                subtitle: const Text(
-                                  'Permit others to download this document',
-                                ),
-                                value: _isDownloadable,
-                                onChanged: (bool value) {
-                                  setState(() {
-                                    _isDownloadable = value;
-                                  });
-                                },
-                                secondary: const Icon(Icons.download),
-                              ),
-                              const Divider(),
-
-                              SwitchListTile(
-                                title: const Text('Allow Screenshots'),
-                                subtitle: const Text(
-                                  'Allow screenshots/screen recording of this document',
-                                ),
-                                value: _isScreenshotAllowed,
-                                onChanged: (bool value) {
-                                  setState(() {
-                                    _isScreenshotAllowed = value;
-                                  });
-                                },
-                                secondary: const Icon(Icons.screenshot),
-                              ),
-                              const Divider(),
-
-                              SwitchListTile(
-                                title: const Text(
-                                  'Share Publicly (Experimental)',
-                                ),
-                                subtitle: const Text(
-                                  'Make this document accessible via a unique link',
-                                ),
-                                value: _isPubliclyShared,
-                                onChanged: (bool value) {
-                                  setState(() {
-                                    _isPubliclyShared = value;
-                                  });
-                                },
-                                secondary: const Icon(Icons.public),
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
+                      // Removed duplicate "Sharing & Security Options" card here.
+                      // Only one instance of this card is needed.
 
                       Card(
                         elevation: 4,
@@ -651,7 +547,6 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
