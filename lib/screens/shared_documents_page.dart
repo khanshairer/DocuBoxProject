@@ -6,7 +6,6 @@ import '../models/document.dart';
 // CORRECTED IMPORT PATH: Now importing from the consolidated widgets folder
 import '../widgets/homepage_menu_bar_widget.dart'; 
 import 'shared_document_viewer_page.dart';
-import '../widgets/document_card.dart'; // Ensure DocumentCard is imported from widgets
 
 class SharedDocumentsPage extends ConsumerWidget {
   const SharedDocumentsPage({super.key});

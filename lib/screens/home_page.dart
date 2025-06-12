@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_state_provider.dart';
-import 'document_upload_page.dart'; 
 import '../widgets/homepage_menu_bar_widget.dart';
 import '../providers/documents_provider.dart';
 import '../widgets/document_card.dart';

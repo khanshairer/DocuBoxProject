@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/documents_provider.dart'; // Our import for documents_provider
-import '../models/user.dart'; // Our import for AppUser model
 
 class UserSelectorModal extends ConsumerStatefulWidget { // This is correct, it extends ConsumerStatefulWidget
   final List<String> initialSelectedUserIds;
