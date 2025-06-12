@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/documents_provider.dart'; // Our import for documents_provider
+import '../providers/documents_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class UserSelectorModal extends ConsumerStatefulWidget {
-  // This is correct, it extends ConsumerStatefulWidget
   final List<String> initialSelectedUserIds;
   final Function(List<String>) onSelectionChanged;
 
@@ -15,11 +14,9 @@ class UserSelectorModal extends ConsumerStatefulWidget {
   });
 
   @override
-  // CRITICAL FIX: The state class MUST extend ConsumerState<UserSelectorModal>
   ConsumerState<UserSelectorModal> createState() => _UserSelectorModalState();
 }
 
-// CRITICAL FIX: This class definition MUST extend ConsumerState<UserSelectorModal>
 class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
   late Set<String> selectedUserIds;
   String searchQuery = '';
@@ -27,21 +24,19 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
   @override
   void initState() {
     super.initState();
-    selectedUserIds = Set.from(
-      widget.initialSelectedUserIds,
-    ); // 'widget' is now available
+    selectedUserIds = Set.from(widget.initialSelectedUserIds);
   }
 
   @override
   Widget build(BuildContext context) {
-    // 'ref' is now available because it's a ConsumerState
     final allUsersAsyncValue = ref.watch(allUsersProvider);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.8,
-        height: MediaQuery.of(context).size.height * 0.7,
+        width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.9,
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,13 +45,19 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Select Users to Share With',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  'Select Users',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 IconButton(
                   onPressed: () => context.pop(),
-                  icon: const Icon(Icons.close),
+                  icon: Icon(
+                    Icons.close,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -66,18 +67,33 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search users...',
-                prefixIcon: const Icon(Icons.search),
+                // FIX: Use withAlpha
+                hintStyle: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    // FIX: Use withAlpha
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.3).round()),
+                  ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
               ),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               onChanged: (value) {
                 setState(() {
-                  // 'setState' is now available
                   searchQuery = value.toLowerCase();
                 });
               },
@@ -92,13 +108,16 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  // FIX: Use withAlpha
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withAlpha((255 * 0.2).round()),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${selectedUserIds.length} user${selectedUserIds.length == 1 ? '' : 's'} selected',
                   style: TextStyle(
-                    color: Colors.blue.shade700,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -127,16 +146,19 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                           Icon(
                             Icons.people_outline,
                             size: 64,
-                            color: Colors.grey.shade400,
+                            // FIX: Use withAlpha
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withAlpha((255 * 0.4).round()),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             searchQuery.isEmpty
                                 ? 'No users found'
                                 : 'No users match our search',
+                            // FIX: Use withAlpha
                             style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                           ),
                         ],
@@ -150,44 +172,100 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                       final user = filteredUsers[index];
                       final isSelected = selectedUserIds.contains(user.uid);
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: CheckboxListTile(
-                          value: isSelected,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              // 'setState' is now available
-                              if (value == true) {
-                                selectedUserIds.add(user.uid);
-                              } else {
-                                selectedUserIds.remove(user.uid);
-                              }
-                            });
-                          },
-                          title: Text(
-                            user.displayName?.isNotEmpty == true
-                                ? user.displayName!
-                                : user.email,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
+                      return Container(
+                        margin: const EdgeInsets.only(top: 26),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color.fromARGB(
+                                      51,
+                                      255,
+                                      255,
+                                      255,
+                                    ) // 20% white
+                                    : const Color.fromARGB(
+                                      153,
+                                      33,
+                                      150,
+                                      243,
+                                    ), // 60% blue (#2196F3)
+                            width: 1.5,
                           ),
-                          subtitle:
-                              user.displayName?.isNotEmpty == true
-                                  ? Text(user.email)
-                                  : null,
-                          secondary: CircleAvatar(
-                            backgroundColor: Colors.blue.shade100,
-                            child: Text(
-                              (user.displayName?.isNotEmpty == true
-                                      ? user.displayName![0]
-                                      : user.email[0])
-                                  .toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.bold,
+                        ),
+                        child: SizedBox(
+                          height: 122,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: CheckboxListTile(
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedUserIds.add(user.uid);
+                                  } else {
+                                    selectedUserIds.remove(user.uid);
+                                  }
+                                });
+                              },
+                              title: Text(
+                                user.displayName?.isNotEmpty == true
+                                    ? user.displayName!
+                                    : user.email,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 16,
+                                ),
                               ),
+                              subtitle:
+                                  user.displayName?.isNotEmpty == true
+                                      ? Text(
+                                        user.email,
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withAlpha(178), // ~70% opacity
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      )
+                                      : null,
+                              secondary: CircleAvatar(
+                                backgroundColor:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color.fromARGB(
+                                          51,
+                                          25,
+                                          118,
+                                          210,
+                                        ) // 20% #1976D2
+                                        : const Color.fromARGB(
+                                          51,
+                                          33,
+                                          150,
+                                          243,
+                                        ), // 20% #2196F3
+                                child: Text(
+                                  (user.displayName?.isNotEmpty == true
+                                          ? user.displayName![0]
+                                          : user.email[0])
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
                             ),
                           ),
-                          controlAffinity: ListTileControlAffinity.leading,
                         ),
                       );
                     },
@@ -207,17 +285,16 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
                           const SizedBox(height: 16),
                           Text(
                             'Error loading users',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.red.shade600,
-                            ),
+                            style: TextStyle(color: Colors.red.shade600),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             error.toString(),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              // FIX: Use withAlpha
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -235,14 +312,17 @@ class _UserSelectorModalState extends ConsumerState<UserSelectorModal> {
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    widget.onSelectionChanged(
-                      selectedUserIds.toList(),
-                    ); // 'widget' is now available
+                    widget.onSelectionChanged(selectedUserIds.toList());
                     Navigator.of(context).pop();
                   },
                   child: const Text('Apply Selection'),
