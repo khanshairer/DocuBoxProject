@@ -1,119 +1,222 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_state_provider.dart';
+import '../providers/profile_image_provider.dart'; // Ensure this import is correct
 
 /// My custom Drawer widget for the HomePage menu.
-///
-/// This widget requires [authNotifier] and [currentUser] to be passed in
-/// from its parent widget (HomePage) as they are needed for actions
-/// like logout and displaying user information.
-class HomePageMenuBar extends StatelessWidget {
-  final FirebaseAuthStateNotifier authNotifier;
-  final User? currentUser;
-
-  const HomePageMenuBar({
-    super.key,
-    required this.authNotifier,
-    required this.currentUser,
-  });
+/// It now directly watches necessary providers using Riverpod.
+class HomePageMenuBar extends ConsumerWidget {
+  // Keep as ConsumerWidget
+  const HomePageMenuBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Access ref here
+    final authNotifier = ref.watch(
+      authStateProvider.notifier,
+    ); // Get notifier for signOut
+    final currentUser =
+        ref.watch(authStateProvider).currentUser; // Watch current user
+    final profileImageState = ref.watch(
+      profileImageProvider,
+    ); // Watch profile image state
+
+    // Get the current user's display name or email, prioritizing display name
+    final String userDisplayName =
+        currentUser?.displayName?.isNotEmpty == true
+            ? currentUser!.displayName!
+            : currentUser?.email ?? 'Logged In User';
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero, // Remove default ListView padding
         children: <Widget>[
-          // My Drawer header, typically showing user info
+          // My Drawer header, showing user info and profile image
           DrawerHeader(
             decoration: BoxDecoration(
               color:
                   Theme.of(
                     context,
-                  ).colorScheme.primary, // Using primary theme color
+                  ).colorScheme.primary, // Uses theme's primary color
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 30,
-                    color:
-                        Colors
-                            .blue, // Using a fixed blue for the icon, or Theme.of(context).colorScheme.primary
+                  backgroundColor:
+                      Theme.of(context)
+                          .colorScheme
+                          .onPrimary, // Background color that contrasts primary
+                  // The child property is used here to show the loading indicator
+                  child: ClipOval(
+                    // Clip the image/icon to an oval shape
+                    child: SizedBox.expand(
+                      // Make the child fill the CircleAvatar
+                      child:
+                          (profileImageState.imageUrl != null &&
+                                  profileImageState.imageUrl!.isNotEmpty)
+                              ? Image.network(
+                                profileImageState.imageUrl!,
+                                fit: BoxFit.cover,
+                                // Show a loading indicator while the image is loading
+                                loadingBuilder: (
+                                  BuildContext context,
+                                  Widget child,
+                                  ImageChunkEvent? loadingProgress,
+                                ) {
+                                  if (loadingProgress == null) {
+                                    return child; // Image finished loading
+                                  }
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress
+                                              .cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                // Show a person icon if the image fails to load
+                                errorBuilder:
+                                    (context, error, stackTrace) => Icon(
+                                      Icons.person,
+                                      size: 30,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                              )
+                              : Icon(
+                                // Fallback icon if no image URL
+                                Icons.person,
+                                size: 30,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  currentUser?.email ??
-                      'Logged In User', // Using passed currentUser
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
+                  userDisplayName, // Display fetched user name or email
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color:
+                        Theme.of(context)
+                            .colorScheme
+                            .onPrimary, // Text color that contrasts primary
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          // Home option (My Documents) - consistent with Home Page
+
+          // Home option (My Documents)
           ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'), // Clearer label
+            leading: Icon(
+              Icons.home,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Home',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.go('/'); // Navigating to Home (root path)
+              if (context.mounted) {
+                // Ensure widget is still mounted
+                Navigator.pop(context); // Close the drawer
+                context.go('/'); // Navigate to Home (root path)
+              }
             },
           ),
-          // Upload Document option - changed to push for consistent stack
+          // Upload Document option
           ListTile(
-            leading: const Icon(Icons.upload_file), // Changed icon for clarity
-            title: const Text('Upload Document'),
+            leading: Icon(
+              Icons.upload_file,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Upload Document',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/document-upload'); // Using context.push
+              if (context.mounted) {
+                Navigator.pop(context);
+                context.go('/document_upload');
+              }
             },
           ),
-          // Shared Documents option - changed to push for consistent stack
+          // Shared Documents option
           ListTile(
-            leading: const Icon(Icons.share),
-            title: const Text('Shared Documents'),
+            leading: Icon(
+              Icons.share,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Shared Documents',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/shared-documents'); // Using context.push
+              if (context.mounted) {
+                Navigator.pop(context);
+                context.go('/shared-documents');
+              }
             },
           ),
-          // Profile option - changed to push for consistent stack & path
+          // Profile option
           ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Profile'),
+            leading: Icon(
+              Icons.person,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Profile',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push(
-                '/profile',
-              ); // Using context.push, path is now /profile
+              if (context.mounted) {
+                Navigator.pop(context);
+                context.go('/profile');
+              }
             },
           ),
-          // Settings option - changed to push for consistent stack
+          // Settings option
           ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
+            leading: Icon(
+              Icons.settings,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Settings',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/settings'); // Using context.push
+              if (context.mounted) {
+                Navigator.pop(context);
+                context.go('/settings');
+              }
             },
           ),
-          // Chat option - changed to push for consistent stack
+          // Chat option
           ListTile(
-            leading: const Icon(Icons.chat),
-            title: const Text('Chat'),
+            leading: Icon(
+              Icons.chat,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Chat',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              context.push('/chat'); // Using context.push
+              if (context.mounted) {
+                Navigator.pop(context);
+                context.go('/chat');
+              }
             },
           ),
 
@@ -123,8 +226,10 @@ class HomePageMenuBar extends StatelessWidget {
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
-              Navigator.pop(context); // Close the drawer
-              await authNotifier.signOut();
+              if (context.mounted) {
+                Navigator.pop(context); // Close the drawer
+              }
+              await authNotifier.signOut(); // Perform logout
             },
           ),
         ],

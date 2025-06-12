@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:go_router/go_router.dart';
 import 'signup_page.dart';
 import "home_page.dart";
 
@@ -15,24 +16,39 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   String error = '';
+  bool _isLoading = false;
 
   // login successful, navigate to home page
   // considering using a mounted option to check if the widget is still in the tree
   //If the user navigates away or the widget is disposed during the await, using context can crash the app or cause unexpected behavior.
 
   Future<void> _loginWithEmail() async {
+    setState(() {
+      error = '';
+      _isLoading = true;
+    });
+
     try {
+      // Attempt login
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
+
+      // Navigate to home if successful
+      context.go('/');
     } on FirebaseAuthException catch (e) {
+      // Show error message
       setState(() => error = e.message ?? 'Login failed');
+    } catch (e) {
+      // Catch-all for other errors
+      setState(() => error = 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
