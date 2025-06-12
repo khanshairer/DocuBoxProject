@@ -17,17 +17,9 @@ class SharedDocumentsPage extends ConsumerWidget {
     final user = authNotifier.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Shared Documents'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
+      appBar: AppBar(title: const Text('Shared Documents')),
       // Only show drawer if user is logged in
-      drawer:
-          user != null
-              ? HomePageMenuBar(authNotifier: authNotifier, currentUser: user)
-              : null,
+      drawer: user != null ? HomePageMenuBar() : null,
       body: sharedDocumentsAsyncValue.when(
         data: (documents) {
           if (documents.isEmpty) {
