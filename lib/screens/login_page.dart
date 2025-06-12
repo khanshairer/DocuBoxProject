@@ -16,7 +16,6 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   String error = '';
-  bool _isLoading = false;
 
   // login successful, navigate to home page
   // considering using a mounted option to check if the widget is still in the tree
