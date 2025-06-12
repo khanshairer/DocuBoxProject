@@ -12,7 +12,6 @@ class DarkTheme {
   ); // Brighter blue accent
   static const Color _darkTextPrimary = Colors.white;
   static const Color _darkTextSecondary = Color(0xFFBDBDBD); // Secondary text
-  // FIX: Changed to final as it's assigned once
   static final Color _darkButtonAmber =
       Colors.amber[400]!; // Specific amber for buttons/sliders
 
@@ -35,9 +34,11 @@ class DarkTheme {
       scaffoldBackgroundColor: _darkBackground,
       canvasColor: _darkBackground,
       cardColor: _darkSurface, // Used for Card backgrounds
-      // FIX: Replaced deprecated dialogBackgroundColor with dialogTheme
-      dialogTheme: DialogTheme(backgroundColor: _darkSurface),
-      // FIX: Replaced deprecated withOpacity with withAlpha for subtle divider
+      // FIX 1: Changed DialogTheme to DialogThemeData
+      dialogTheme: DialogThemeData(
+        backgroundColor: _darkSurface,
+      ), // <--- FIXED HERE
+
       dividerColor: Colors.white.withAlpha((255 * 0.1).round()),
 
       // Color scheme (synchronizing with your custom dark palette)
@@ -48,13 +49,11 @@ class DarkTheme {
         onSecondary: _darkTextPrimary, // Text/icons on secondary color
         surface: _darkSurface, // Card, dialog, sheet backgrounds
         onSurface: _darkTextPrimary, // Text/icons on surface
-        // FIX: 'background' and 'onBackground' are deprecated. Removed.
-        // background: _darkBackground,
-        // onBackground: _darkTextPrimary,
         error: Colors.red.shade400, // Error color
         onError: _darkTextPrimary, // Text/icons on error color
       ),
-      brightness: baseBrightness, // Ensure explicit dark brightness
+      brightness: baseBrightness,
+
       // App bar theme
       appBarTheme: AppBarTheme(
         backgroundColor: _darkBackground,
@@ -109,14 +108,13 @@ class DarkTheme {
         ),
       ),
 
-      // Card theme
-      cardTheme: const CardTheme(
+      // FIX 2: Changed CardTheme to CardThemeData
+      cardTheme: CardThemeData(
+        // <--- FIXED HERE (removed const, as CardThemeData is not const itself)
         color: _darkSurface, // Use dark surface color for cards
         elevation: 2,
-        margin: EdgeInsets.all(8),
-        // FIX: Added 'const' to RoundedRectangleBorder to satisfy 'const CardTheme'
-        // FIX: Re-enabled borderRadius and added white border
-        shape: RoundedRectangleBorder(
+        margin: const EdgeInsets.all(8), // Add const to EdgeInsets
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           side: BorderSide(
             color: Colors.white,
@@ -129,11 +127,9 @@ class DarkTheme {
       sliderTheme: SliderThemeData(
         thumbColor: _darkButtonAmber, // Amber thumb
         activeTrackColor: _darkPrimaryAccentBlue, // Blue active track
-        // FIX: Replaced withOpacity with withAlpha for better precision
         inactiveTrackColor: _darkPrimaryAccentBlue.withAlpha(
           (255 * 0.3).round(),
         ),
-        // FIX: Replaced withOpacity with withAlpha for better precision
         overlayColor: _darkButtonAmber.withAlpha((255 * 0.2).round()),
       ),
 
@@ -154,6 +150,7 @@ class DarkTheme {
         labelMedium: GoogleFonts.montserrat(color: _darkTextSecondary),
         labelSmall: GoogleFonts.montserrat(color: _darkTextSecondary),
       ).apply(fontSizeFactor: fontSizeFactor),
+
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -166,7 +163,6 @@ class DarkTheme {
           horizontal: 16,
           vertical: 14,
         ),
-        // FIX: Replaced withOpacity with withAlpha for better precision
         hintStyle: TextStyle(
           color: _darkTextSecondary.withAlpha((255 * 0.7).round()),
         ),
