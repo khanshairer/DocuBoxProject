@@ -57,6 +57,25 @@ class UserService {
     }
   }
 
+  static Future<void> saveUserToken(String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Don't proceed if no user is logged in
+
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      // Use FieldValue.arrayUnion to add the token to the array.
+      // This is great because it only adds the token if it's not already present.
+      await userRef.update({
+        'fcmTokens': FieldValue.arrayUnion([token]),
+      });
+    } catch (e) {
+      // This can happen if the user document doesn't exist yet.
+      // You could add more robust error handling or create the doc if needed.
+      print('Error saving user token: $e');
+    }
+  }
+
   /// Get all users from the collection
   static Future<List<AppUser>> getAllUsers() async {
     try {

@@ -1,1 +1,38 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"gr05-docubox-2025-inters-1af0a","appId":"1:784534102255:android:90b7e8885f19ba20ed7b1a","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"gr05-docubox-2025-inters-1af0a","configurations":{"android":"1:784534102255:android:90b7e8885f19ba20ed7b1a","ios":"1:784534102255:ios:ff6dea5198fb6fb7ed7b1a","macos":"1:784534102255:ios:ff6dea5198fb6fb7ed7b1a","web":"1:784534102255:web:f87fec422404f01bed7b1a","windows":"1:784534102255:web:d59ff6f73c84ae28ed7b1a"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "gr05-docubox-2025-inters-1af0a",
+          "appId": "1:784534102255:android:90b7e8885f19ba20ed7b1a",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "gr05-docubox-2025-inters-1af0a",
+          "configurations": {
+            "android": "1:784534102255:android:90b7e8885f19ba20ed7b1a",
+            "ios": "1:784534102255:ios:ff6dea5198fb6fb7ed7b1a",
+            "macos": "1:784534102255:ios:ff6dea5198fb6fb7ed7b1a",
+            "web": "1:784534102255:web:f87fec422404f01bed7b1a",
+            "windows": "1:784534102255:web:d59ff6f73c84ae28ed7b1a"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

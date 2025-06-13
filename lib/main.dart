@@ -4,20 +4,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'common/app_theme.dart';
 import 'common/dark_theme.dart';
-import 'routing/app_router.dart';
+import 'routing/app_router.dart'; // Assuming your router file is in lib/router/app_router.dart
 import 'providers/theme_settings_provider.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-  }
+  // Initialize Firebase with platform-specific options.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Initialize the notification service right after Firebase
+  await NotificationService().initialize();
+
+  // Run the app, wrapped in ProviderScope for Riverpod state management.
   runApp(const ProviderScope(child: MyApp()));
 }
 
