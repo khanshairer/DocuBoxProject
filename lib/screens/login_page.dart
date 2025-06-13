@@ -141,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}\$');
+    final emailRegex = RegExp(r'@');
     return emailRegex.hasMatch(email);
   }
 
