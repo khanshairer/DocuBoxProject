@@ -6,6 +6,12 @@ import 'common/app_theme.dart';
 import 'common/dark_theme.dart';
 import 'routing/app_router.dart';
 import 'providers/theme_settings_provider.dart';
+import 'package:stream_chat_flutter/stream_chat_flutter.dart';
+
+final streamChatClient = StreamChatClient(
+  'sghkt7mfzdku', // 🔑 Replace with your Stream API key
+  logLevel: Level.INFO,
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
