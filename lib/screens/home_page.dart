@@ -5,6 +5,8 @@ import '../providers/auth_state_provider.dart';
 import '../widgets/homepage_menu_bar_widget.dart';
 import '../providers/documents_provider.dart';
 import '../widgets/document_card.dart';
+import '../services/notification_service.dart';
+import '../services/user_service.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -20,6 +22,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    NotificationService.checkAndNotifyExpiringDocuments();
+    _setupNotifications(); // Call the notification setup here.
   }
 
   @override
@@ -27,6 +31,18 @@ class _HomePageState extends ConsumerState<HomePage> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // 3. Add the function to handle permission and token saving
+  void _setupNotifications() async {
+    final notificationService = NotificationService();
+    await notificationService.requestPermission();
+    final token = await notificationService.getToken();
+
+    // If a token is successfully retrieved, save it to the user's profile
+    if (token != null) {
+      await UserService.saveUserToken(token);
+    }
   }
 
   void _onSearchChanged() {

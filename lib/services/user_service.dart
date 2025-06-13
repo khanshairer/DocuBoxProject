@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user.dart';
+import 'package:flutter/foundation.dart';
+
 
 class UserService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -54,6 +56,25 @@ class UserService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  static Future<void> saveUserToken(String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Don't proceed if no user is logged in
+
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      // Use FieldValue.arrayUnion to add the token to the array.
+      // This is great because it only adds the token if it's not already present.
+      await userRef.update({
+        'fcmTokens': FieldValue.arrayUnion([token]),
+      });
+    } catch (e) {
+      // This can happen if the user document doesn't exist yet.
+      // You could add more robust error handling or create the doc if needed.
+      debugPrint('Error saving user token: $e');
     }
   }
 
