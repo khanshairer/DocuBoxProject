@@ -11,7 +11,7 @@ import 'services/notification_service.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // This runs when app receives FCM while in background/terminated
-  print('Background FCM received: ${message.notification?.title}');
+  debugPrint('Background FCM received: ${message.notification?.title}');
 }
 
 void main() async {

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user.dart';
+import 'package:flutter/foundation.dart';
+
 
 class UserService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -72,7 +74,7 @@ class UserService {
     } catch (e) {
       // This can happen if the user document doesn't exist yet.
       // You could add more robust error handling or create the doc if needed.
-      print('Error saving user token: $e');
+      debugPrint('Error saving user token: $e');
     }
   }
 
