@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/document.dart';
+import 'share_settings_modal.dart';
 
 class DocumentCard extends StatelessWidget {
   final Document document;
@@ -39,15 +40,50 @@ class DocumentCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  IconButton(
+                  PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Document options coming soon!'),
-                        ),
-                      );
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'share':
+                          showDialog(
+                            context: context,
+                            builder: (context) => ShareSettingsModal(
+                              document: document,
+                            ),
+                          );
+                          break;
+                        case 'view':
+                          // TODO: Implement document viewing
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Viewing ${document.name} coming soon!'),
+                            ),
+                          );
+                          break;
+                      }
                     },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'share',
+                        child: Row(
+                          children: [
+                            Icon(Icons.share),
+                            SizedBox(width: 8),
+                            Text('Share Settings'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'view',
+                        child: Row(
+                          children: [
+                            Icon(Icons.visibility),
+                            SizedBox(width: 8),
+                            Text('View Document'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -78,6 +114,7 @@ class DocumentCard extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 child: TextButton.icon(
                   onPressed: () {
+                    // TODO: Implement document viewing
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Viewing ${document.name} coming soon!'),

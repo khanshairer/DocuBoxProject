@@ -207,13 +207,10 @@ class _ShareSettingsModalState extends ConsumerState<ShareSettingsModal> {
                                     ),
                                   ],
                                 ),
-                                ElevatedButton.icon(
+                                IconButton(
                                   onPressed: _showUserSelector,
-                                  icon: const Icon(Icons.person_add, size: 18),
-                                  label: const Text('Add Users'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  ),
+                                  icon: const Icon(Icons.person_add, size: 24),
+                                  tooltip: 'Add Users',
                                 ),
                               ],
                             ),
