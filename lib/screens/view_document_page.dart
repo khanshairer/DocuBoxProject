@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import '../models/document.dart';
 
 class ViewDocumentPage extends StatefulWidget {
@@ -132,8 +136,37 @@ class _ViewDocumentPageState extends State<ViewDocumentPage> {
           ],
         ),
       );
+    } else if (widget.document.fileName.toLowerCase().endsWith('.pdf')) {
+      // PDF preview using flutter_pdfview
+      return FutureBuilder<File>(
+        future: _downloadPdfToFile(widget.document.downloadUrl),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Failed to load PDF'));
+          } else if (!snapshot.hasData) {
+            return Center(child: Text('PDF not available'));
+          }
+          return Container(
+            width: double.infinity,
+            height: 400,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: PDFView(
+              filePath: snapshot.data!.path,
+              enableSwipe: true,
+              swipeHorizontal: false,
+              autoSpacing: true,
+              pageFling: true,
+            ),
+          );
+        },
+      );
     } else {
-      // For non-image files, show a placeholder
+      // For non-image, non-pdf files, show a placeholder
       return Container(
         width: double.infinity,
         height: 400,
@@ -163,6 +196,18 @@ class _ViewDocumentPageState extends State<ViewDocumentPage> {
         ),
       );
     }
+  }
+
+  Future<File> _downloadPdfToFile(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to download PDF');
+    }
+    final bytes = response.bodyBytes;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/${widget.document.fileName}');
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
   }
 
   void _openFullscreenImage() {
