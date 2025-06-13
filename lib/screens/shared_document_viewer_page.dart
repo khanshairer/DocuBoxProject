@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import '../models/document.dart';
 
 class SharedDocumentViewerPage extends StatefulWidget {
@@ -201,8 +205,37 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
           ],
         ),
       );
+    } else if (widget.document.fileName.toLowerCase().endsWith('.pdf')) {
+      // PDF preview using flutter_pdfview
+      return FutureBuilder<File>(
+        future: _downloadPdfToFile(widget.document.downloadUrl),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Failed to load PDF'));
+          } else if (!snapshot.hasData) {
+            return Center(child: Text('PDF not available'));
+          }
+          return Container(
+            width: double.infinity,
+            height: 400,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: PDFView(
+              filePath: snapshot.data!.path,
+              enableSwipe: true,
+              swipeHorizontal: false,
+              autoSpacing: true,
+              pageFling: true,
+            ),
+          );
+        },
+      );
     } else {
-      // For non-image files, show preview with option to open
+      // For non-image, non-pdf files, show a placeholder
       return Container(
         width: double.infinity,
         height: 400,
@@ -214,11 +247,7 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _getFileIcon(widget.document.fileName),
-                size: 64,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.insert_drive_file, size: 64, color: Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
                 widget.document.fileName,
@@ -227,40 +256,27 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Click "Open Document" to view in browser',
+                'Preview not available',
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                 textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
-                  try {
-                    final Uri url = Uri.parse(widget.document.downloadUrl);
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url, mode: LaunchMode.inAppBrowserView);
-                    } else {
-                      throw 'Could not launch $url';
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      scaffoldMessenger.showSnackBar(
-                        SnackBar(
-                          content: Text('Error opening document: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.open_in_browser),
-                label: const Text('Open Document'),
               ),
             ],
           ),
         ),
       );
     }
+  }
+
+  Future<File> _downloadPdfToFile(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200) {
+      throw Exception('Failed to download PDF');
+    }
+    final bytes = response.bodyBytes;
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/${widget.document.fileName}');
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
   }
 
   IconData _getFileIcon(String fileName) {
