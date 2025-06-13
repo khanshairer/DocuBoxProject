@@ -22,6 +22,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    NotificationService.checkAndNotifyExpiringDocuments();
     _setupNotifications(); // Call the notification setup here.
   }
 

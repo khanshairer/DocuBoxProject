@@ -1,104 +1,100 @@
-// lib/services/notification_service.dart
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
-
-// This is a top-level function, not part of any class.
-// It's required for handling messages when the app is in the background or terminated.
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, like Firestore,
-  // make sure you call `initializeApp` before using them.
-  // await Firebase.initializeApp(); // We don't need this for just printing.
-
-  if (kDebugMode) {
-    print("Handling a background message: ${message.messageId}");
-    print('Message data: ${message.data}');
-    print('Message notification: ${message.notification?.title}');
-  }
-}
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/material.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  Future<void> initialize() async {
-    // Set a handler for messages received when the app is in the background or terminated.
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  static Future<void> initialize() async {
+    // Initialize timezone
+    tz.initializeTimeZones();
 
-    // Handler for messages received while the app is in the foreground.
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (kDebugMode) {
-        print('Got a message whilst in the foreground!');
-        print('Message data: ${message.data}');
-      }
+    // iOS: request permissions
+    await FirebaseMessaging.instance.requestPermission();
 
-      if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
-        // Here you could show a local notification using a package like flutter_local_notifications
-        // to make the user aware of the message. The OS does not show a notification banner
-        // for foreground apps by default.
-      }
-    });
+    // Android + iOS local notifications
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Handler for when a user taps a notification, opening the app from a background state.
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      if (kDebugMode) {
-        print('A new onMessageOpenedApp event was published!');
-        print('Message data: ${message.data}');
-      }
-      _handleNotificationNavigation(message.data);
-    });
-
-    // Check if the app was launched from a terminated state by a notification.
-    _setupTerminatedStateInteraction();
-  }
-
-  Future<void> _setupTerminatedStateInteraction() async {
-    // Get any messages which caused the application to open from a terminated state.
-    RemoteMessage? initialMessage = await _fcm.getInitialMessage();
-
-    if (initialMessage != null) {
-      // If the message contains a data property, handle navigation.
-      if (kDebugMode) {
-        print('App opened from terminated state by a notification:');
-        print('Message data: ${initialMessage.data}');
-      }
-      _handleNotificationNavigation(initialMessage.data);
-    }
-  }
-  
-  void _handleNotificationNavigation(Map<String, dynamic> data) {
-    // This is where you'll handle navigation.
-    // Our Cloud Function will send a 'documentId' in the data payload.
-    final documentId = data['documentId'];
-    if (documentId != null) {
-      print('Navigate to document with ID: $documentId');
-      // In a real scenario, you would use your GoRouter instance to navigate:
-      // navigatorKey.currentContext.push('/document-details', extra: documentId);
-    }
-  }
-
-  Future<void> requestPermission() async {
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: DarwinInitializationSettings(),
     );
 
-    if (kDebugMode) {
-      print('User granted permission: ${settings.authorizationStatus}');
-    }
+    await _localNotificationsPlugin.initialize(initSettings);
+
+    // Handle foreground FCM messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        _showLocalNotification(
+          title: message.notification!.title ?? 'Reminder',
+          body: message.notification!.body ?? '',
+        );
+      }
+    });
+  }
+
+  // Add this inside NotificationService class
+  Future<void> requestPermission() async {
+    await FirebaseMessaging.instance.requestPermission();
   }
 
   Future<String?> getToken() async {
-    String? token = await _fcm.getToken();
-    if (kDebugMode) {
-      print('FCM Token: $token');
+    return await FirebaseMessaging.instance.getToken();
+  }
+
+  static Future<void> _showLocalNotification({
+    required String title,
+    required String body,
+  }) async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'docubox_channel',
+      'DocuBox Reminders',
+      channelDescription: 'Notifications for expiring documents',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(),
+    );
+
+    await _localNotificationsPlugin.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      platformDetails,
+    );
+  }
+
+  static Future<void> checkAndNotifyExpiringDocuments() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final now = DateTime.now();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('documents')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      final expiry = (data['expiry'] as Timestamp).toDate();
+      final name = data['name'] ?? 'Unnamed Document';
+      final diffDays = expiry.difference(now).inDays;
+
+      if (diffDays == 3 || diffDays == 7) {
+        await _showLocalNotification(
+          title: 'Upcoming Document Expiry',
+          body: '$name is expiring in $diffDays days',
+        );
+      }
     }
-    return token;
   }
 }

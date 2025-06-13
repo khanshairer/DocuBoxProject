@@ -1,82 +1,61 @@
-import {onSchedule} from "firebase-functions/v2/scheduler";
-import * as logger from "firebase-functions/logger";
+import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-// Initialize the Firebase Admin SDK
 admin.initializeApp();
+
 const db = admin.firestore();
+const messaging = admin.messaging();
 
-// Define the function using the new onSchedule v2 syntax.
-export const sendExpiryReminders = onSchedule("every day 09:00", async (event) => {
-  logger.info("Starting daily check for expiring documents...");
+export const sendExpiryNotifications = functions.pubsub
+  .schedule("every 24 hours")
+  .onRun(async () => {
+    const now = new Date();
+    const usersSnapshot = await db.collection("users").get();
 
-  // Define the reminder intervals in days.
-  const reminderDays = [1, 7, 30, 90];
+    for (const userDoc of usersSnapshot.docs) {
+      const userId = userDoc.id;
+      const fcmToken = userDoc.data().fcmToken;
 
-  for (const days of reminderDays) {
-    // Calculate the target expiry date for the interval.
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + days);
-
-    // Create a start and end of the target day to query the entire day's documents.
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
-
-    const startTimestamp = admin.firestore.Timestamp.fromDate(startOfDay);
-    const endTimestamp = admin.firestore.Timestamp.fromDate(endOfDay);
-
-    // Query Firestore for documents expiring on the target day.
-    // This will require a composite index, which Firebase will help you create via a link in the logs.
-    const querySnapshot = await db.collection("documents")
-      .where("expiryDate", ">=", startTimestamp)
-      .where("expiryDate", "<=", endTimestamp)
-      .get();
-
-    if (querySnapshot.empty) {
-      logger.info(`No documents found expiring in ${days} day(s).`);
-      continue; // Move to the next reminder interval.
-    }
-
-    logger.info(`Found ${querySnapshot.size} document(s) expiring in ${days} day(s).`);
-
-    // Process each expiring document.
-    for (const doc of querySnapshot.docs) {
-      const document = doc.data();
-      const userId = document.userId;
-      const documentName = document.name || "Untitled";
-
-      if (!userId) {
-        logger.warn(`Document ${doc.id} is missing a userId. Skipping.`);
+      if (!fcmToken) {
+        console.log(`User ${userId} has no FCM token. Skipping.`);
         continue;
       }
 
-      // Get the user's data to find their FCM device tokens.
-      const userDoc = await db.collection("users").doc(userId).get();
-      if (!userDoc.exists) {
-        logger.warn(`User ${userId} not found. Skipping.`);
-        continue;
-      }
+      const docsSnapshot = await db
+        .collection("documents")
+        .where("userId", "==", userId)
+        .get();
 
-      const user = userDoc.data();
-      const tokens = user?.fcmTokens;
+      for (const doc of docsSnapshot.docs) {
+        const data = doc.data();
 
-      if (user && tokens && tokens.length > 0) {
-        const payload = {
-          notification: {
-            title: "DocuBox: Document Expiry Reminder",
-            body: `Your document "${documentName}" is expiring in ${days} day(s).`,
-          },
-          data: {
-            documentId: doc.id,
-          },
-        };
+        const expiry: admin.firestore.Timestamp = data.expiry;
+        const expiryDate = expiry.toDate();
 
-        logger.info(`Sending notification for document ${documentName} to user ${userId}`);
-        await admin.messaging().sendToDevice(tokens, payload);
-      } else {
-        logger.warn(`User ${userId} has no FCM tokens. Skipping notification.`);
+        const daysLeft = Math.floor(
+          (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysLeft === 3 || daysLeft === 7) {
+          const docName = data.name || "Unnamed Document";
+
+          const message = {
+            token: fcmToken,
+            notification: {
+              title: "📁 Document Expiry Reminder",
+              body: `${docName} is expiring in ${daysLeft} days.`,
+            },
+          };
+
+          try {
+            await messaging.send(message);
+            console.log(`✅ Sent to ${userId}: ${docName} (${daysLeft} days left)`);
+          } catch (error) {
+            console.error(`❌ Error sending to ${userId}:`, error);
+          }
+        }
       }
     }
-  }
-  logger.info("Daily check completed.");
-});
+
+    return null;
+  });

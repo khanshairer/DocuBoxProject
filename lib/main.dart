@@ -6,7 +6,13 @@ import 'common/app_theme.dart';
 import 'common/dark_theme.dart';
 import 'routing/app_router.dart'; // Assuming your router file is in lib/router/app_router.dart
 import 'providers/theme_settings_provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // This runs when app receives FCM while in background/terminated
+  print('Background FCM received: ${message.notification?.title}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,8 +20,8 @@ void main() async {
   // Initialize Firebase with platform-specific options.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Initialize the notification service right after Firebase
-  await NotificationService().initialize();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await NotificationService.initialize(); // <- initialize local + FCM
 
   // Run the app, wrapped in ProviderScope for Riverpod state management.
   runApp(const ProviderScope(child: MyApp()));
