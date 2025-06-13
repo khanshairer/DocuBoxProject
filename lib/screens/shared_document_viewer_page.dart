@@ -279,28 +279,6 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
     return file;
   }
 
-  IconData _getFileIcon(String fileName) {
-    final extension = fileName.toLowerCase().split('.').last;
-    switch (extension) {
-      case 'pdf':
-        return Icons.picture_as_pdf;
-      case 'doc':
-      case 'docx':
-        return Icons.description;
-      case 'txt':
-        return Icons.text_snippet;
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
-      case 'bmp':
-      case 'webp':
-        return Icons.image;
-      default:
-        return Icons.insert_drive_file;
-    }
-  }
-
   void _openFullscreenImage() {
     Navigator.of(context).push(
       MaterialPageRoute(
