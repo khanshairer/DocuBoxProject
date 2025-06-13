@@ -90,6 +90,45 @@ class DarkTheme {
         ),
       ),
 
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: Colors.amber,
+        selectionColor: Colors.amberAccent,
+        selectionHandleColor: Colors.amber,
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        hintStyle: TextStyle(color: Colors.grey[400]),
+        labelStyle: const TextStyle(color: Colors.white),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: kAccentAmber400),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: Colors.grey[600]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: kAccentAmber400, width: 2.0),
+        ),
+      ),
+
+      searchBarTheme: SearchBarThemeData(
+        backgroundColor: MaterialStateProperty.all(const Color(0xFF1E1E1E)),
+        elevation: MaterialStateProperty.all(4),
+        shape: MaterialStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        textStyle: MaterialStateProperty.all(
+          TextStyle(color: Colors.white, fontSize: 16 * safeFontSizeFactor),
+        ),
+        hintStyle: MaterialStateProperty.all(
+          TextStyle(color: Colors.grey[500]),
+        ),
+      ),
+
       sliderTheme: SliderThemeData(
         thumbColor: kAccentAmber400,
         activeTrackColor: kPrimaryBlue900,

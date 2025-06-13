@@ -25,10 +25,10 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Handles email/password login and navigates to the home page on success.
   Future<void> _loginWithEmail() async {
-    if (!mounted) return; // Ensure widget is mounted before setting state
+    if (!mounted) return;
     setState(() {
       error = '';
-      _isLoading = true; // Show loading indicator
+      _isLoading = true;
     });
 
     try {
@@ -37,8 +37,8 @@ class _LoginPageState extends State<LoginPage> {
         password: passwordController.text.trim(),
       );
 
-      if (!mounted) return; // Ensure widget is mounted before navigating
-      context.go('/'); // Use go_router for navigation
+      if (!mounted) return;
+      context.go('/');
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() => error = e.message ?? 'Login failed');
@@ -49,25 +49,24 @@ class _LoginPageState extends State<LoginPage> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false); // Hide loading indicator
+        setState(() => _isLoading = false);
       }
     }
   }
 
   /// Handles Google Sign-In and navigates to the home page on success.
   Future<void> _loginWithGoogle() async {
-    if (!mounted) return; // Ensure widget is mounted before setting state
+    if (!mounted) return;
     setState(() {
       error = '';
-      _isLoading = true; // Show loading indicator
+      _isLoading = true;
     });
 
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
-        // User canceled the Google sign-in process
         if (mounted) {
-          setState(() => _isLoading = false); // Hide loading indicator
+          setState(() => _isLoading = false);
         }
         return;
       }
@@ -82,8 +81,8 @@ class _LoginPageState extends State<LoginPage> {
 
       await FirebaseAuth.instance.signInWithCredential(credential);
 
-      if (!mounted) return; // Ensure widget is mounted before navigating
-      context.go('/'); // Use go_router for navigation
+      if (!mounted) return;
+      context.go('/');
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         setState(() => error = e.message ?? 'Google sign-in failed');
@@ -94,8 +93,31 @@ class _LoginPageState extends State<LoginPage> {
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false); // Hide loading indicator
+        setState(() => _isLoading = false);
       }
+    }
+  }
+
+  /// Sends password reset email
+  Future<void> _resetPassword() async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      setState(() => error = 'Please enter your email first.');
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password reset email sent')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => error = e.message ?? 'Password reset failed');
+    } catch (e) {
+      setState(() => error = 'Something went wrong. Please try again.');
     }
   }
 
@@ -104,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(title: const Text("Login")),
       body:
-          _isLoading // Show loading indicator if true, otherwise show the form
+          _isLoading
               ? const Center(child: CircularProgressIndicator())
               : Padding(
                 padding: const EdgeInsets.all(20),
@@ -120,28 +142,30 @@ class _LoginPageState extends State<LoginPage> {
                       obscureText: true,
                       decoration: const InputDecoration(labelText: 'Password'),
                     ),
-                    const SizedBox(height: 20),
-                    // Email/Password Login Button
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: _isLoading ? null : _resetPassword,
+                      child: const Text(
+                        "Forgot Password?",
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed:
-                            _isLoading
-                                ? null
-                                : _loginWithEmail, // Disable button when loading
+                        onPressed: _isLoading ? null : _loginWithEmail,
                         child: const Text("Login"),
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Google Sign-In Button
                     GestureDetector(
-                      onTap:
-                          _isLoading
-                              ? null
-                              : _loginWithGoogle, // Disable button when loading
+                      onTap: _isLoading ? null : _loginWithGoogle,
                       child: Container(
-                        width: double.infinity, // Match width to login button
+                        width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                           vertical: 10,
                           horizontal: 20,
@@ -154,7 +178,6 @@ class _LoginPageState extends State<LoginPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Ensure 'assets/icons/google_logo.png' exists in your pubspec.yaml
                             Image.asset(
                               'assets/icons/google_logo.png',
                               height: 24,
@@ -162,13 +185,16 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(width: 10),
                             const Text(
                               'Sign in with Google',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color.fromARGB(255, 255, 202, 40),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-
                     if (error.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
@@ -179,11 +205,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     TextButton(
                       onPressed:
-                          _isLoading
-                              ? null
-                              : () => context.go(
-                                '/signup',
-                              ), // Use go_router for navigation and disable when loading
+                          _isLoading ? null : () => context.go('/signup'),
                       child: const Text("Don't have an account? Sign Up"),
                     ),
                   ],

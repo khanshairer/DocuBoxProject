@@ -18,29 +18,12 @@ class _SignupPageState extends State<SignupPage> {
   String error = '';
   bool isCheckingUsername = false;
 
-  Future<bool> _isUsernameTaken(String username) async {
-    final result =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .where('username', isEqualTo: username)
-            .limit(1)
-            .get();
-
-    return result.docs.isNotEmpty;
-  }
-
   Future<void> _signup() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final username = usernameController.text.trim();
 
-    if (username.isEmpty) {
-      setState(() => error = 'Username is required');
-      return;
-    }
-
-    if (username.length > 10) {
-      setState(() => error = 'Username must be at most 10 characters');
+    if (username.isEmpty || username.length > 15) {
       return;
     }
 
@@ -49,15 +32,39 @@ class _SignupPageState extends State<SignupPage> {
       error = '';
     });
 
-    if (await _isUsernameTaken(username)) {
-      setState(() {
-        isCheckingUsername = false;
-        error = 'Username already taken';
-      });
-      return;
-    }
-
     try {
+      // Check if username exists
+      final usernameSnapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
+
+      if (usernameSnapshot.docs.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Username already exists")),
+          );
+        }
+        setState(() => isCheckingUsername = false);
+        return;
+      }
+
+      // Check if email already used
+      final emailMethods = await FirebaseAuth.instance
+          .fetchSignInMethodsForEmail(email);
+      if (emailMethods.isNotEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Email already in use")));
+        }
+        setState(() => isCheckingUsername = false);
+        return;
+      }
+
+      // Create user
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
@@ -138,9 +145,9 @@ class _SignupPageState extends State<SignupPage> {
           children: [
             TextField(
               controller: usernameController,
-              maxLength: 10,
+              maxLength: 15,
               decoration: const InputDecoration(
-                labelText: 'Username (max 10 chars)',
+                labelText: 'Username (max 15 chars)',
               ),
             ),
             TextField(
@@ -171,9 +178,8 @@ class _SignupPageState extends State<SignupPage> {
             const SizedBox(height: 10),
             TextButton(
               onPressed: () => context.go('/login'),
-              child: Text("Already have an accout? Login"),
+              child: const Text("Already have an account? Login"),
             ),
-
             const SizedBox(height: 10),
             GestureDetector(
               onTap: _signupWithGoogle,
@@ -195,7 +201,10 @@ class _SignupPageState extends State<SignupPage> {
                     const SizedBox(width: 10),
                     const Text(
                       'Sign up with Google',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color.fromARGB(255, 255, 202, 40),
+                      ),
                     ),
                   ],
                 ),
