@@ -14,8 +14,6 @@ class AppTheme {
     final safeFontSizeFactor = fontSizeFactor.clamp(0.8, 2.0);
     final baseBrightness = Brightness.light;
 
-    final baseTextTheme = ThemeData(brightness: baseBrightness).textTheme;
-
     return ThemeData(
       brightness: baseBrightness,
       primarySwatch: Colors.blue,
@@ -27,6 +25,8 @@ class AppTheme {
         onPrimary: Colors.white,
         secondary: kAccentAmber400,
         onSecondary: Colors.black,
+        surface: Colors.white,
+        onSurface: Colors.black,
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
 

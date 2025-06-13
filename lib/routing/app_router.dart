@@ -7,13 +7,15 @@ import '../screens/welcome_page.dart';
 import '../screens/profile_page.dart';
 import '../screens/settings_page.dart';
 import '../screens/chat_page.dart';
-import '../screens/document_upload_page.dart'; // NEW IMPORT: For document upload page
-import '../screens/shared_documents_page.dart'; // NEW IMPORT: For shared documents page
-import '../providers/auth_state_provider.dart';
+import '../screens/document_upload_page.dart';
+import '../screens/shared_documents_page.dart';
 import '../screens/signup_page.dart';
+import '../providers/auth_state_provider.dart';
+import '../providers/welcome_state_provider.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
+  final AsyncValue<bool> welcomeAsync = ref.watch(welcomeSeenProvider);
 
   return GoRouter(
     initialLocation: '/',
@@ -29,6 +31,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'login',
         builder: (context, state) => const LoginPage(),
       ),
+      GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
       GoRoute(
         path: '/welcome',
         name: 'welcome',
@@ -50,29 +53,43 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ChatPage(),
       ),
       GoRoute(
-        // NEW ROUTE: For Document Upload Page
         path: '/document-upload',
         name: 'document-upload',
         builder: (context, state) => const DocumentUploadPage(),
       ),
       GoRoute(
-        // NEW ROUTE: For Shared Documents Page
         path: '/shared-documents',
         name: 'shared_documents',
         builder: (context, state) => const SharedDocumentsPage(),
       ),
-      GoRoute(path: '/signup', builder: (context, state) => const SignupPage()),
     ],
     redirect: (context, state) {
       final bool loggedIn = authNotifier.currentUser != null;
-      final bool loggingIn = state.matchedLocation == '/login';
-      final bool onWelcome = state.matchedLocation == '/welcome';
+      final String location = state.matchedLocation;
 
-      // If not logged in and not on login/welcome, redirect to welcome
-      if (!loggedIn && !loggingIn && !onWelcome) return '/welcome';
-      // If logged in and trying to access login/welcome, redirect to home
-      if (loggedIn && (loggingIn || onWelcome)) return '/';
-      // Otherwise, no redirect needed.
+      // Wait for welcomeSeenProvider to load
+      if (welcomeAsync.isLoading || welcomeAsync.hasError) {
+        return null;
+      }
+
+      final bool hasSeenWelcome = welcomeAsync.value ?? false;
+
+      if (!loggedIn) {
+        if (!hasSeenWelcome && location != '/welcome') {
+          return '/welcome';
+        }
+        if (hasSeenWelcome && location != '/login' && location != '/signup') {
+          return '/login';
+        }
+      }
+
+      if (loggedIn &&
+          (location == '/login' ||
+              location == '/signup' ||
+              location == '/welcome')) {
+        return '/';
+      }
+
       return null;
     },
   );

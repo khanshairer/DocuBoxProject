@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Import your login/signup page
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'login_page.dart';
 import '../common/text_style.dart';
+import '../providers/welcome_state_provider.dart';
 
-class WelcomePage extends StatefulWidget {
+class WelcomePage extends ConsumerStatefulWidget {
   const WelcomePage({super.key});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
+  ConsumerState<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _WelcomePageState extends State<WelcomePage> {
+class _WelcomePageState extends ConsumerState<WelcomePage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -44,12 +46,12 @@ class _WelcomePageState extends State<WelcomePage> {
                 ],
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 300),
+                  constraints: const BoxConstraints(maxWidth: 300),
                   child: Text(
                     _currentPage == 0
                         ? "Trusted Space for Confidential Documents!"
@@ -62,7 +64,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 ),
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
@@ -85,7 +87,6 @@ class _WelcomePageState extends State<WelcomePage> {
                 }),
               ),
             ),
-
             SizedBox(
               width: double.infinity,
               child: Padding(
@@ -95,13 +96,13 @@ class _WelcomePageState extends State<WelcomePage> {
                       _currentPage < 2
                           ? _nextPage
                           : () {
-                            Navigator.of(context).push(
+                            ref.read(welcomeSeenProvider.notifier).markSeen();
+                            Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                 builder: (context) => const LoginPage(),
                               ),
                             );
                           },
-                  // disable when page is >= 2
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.indigo[800],
@@ -110,7 +111,6 @@ class _WelcomePageState extends State<WelcomePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-
                   child: Text(
                     _currentPage < 2 ? 'Next' : 'Get Started',
                     style: const TextStyle(fontSize: 16),
@@ -131,22 +131,19 @@ class _WelcomePageState extends State<WelcomePage> {
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Container(
-            height: 400, // Set a consistent height for all images
+            height: 400,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black26,
                   blurRadius: 12,
-                  offset: Offset(0, 8),
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
             clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.contain, // Maintain aspect ratio inside fixed height
-            ),
+            child: Image.asset(imagePath, fit: BoxFit.contain),
           ),
         ),
       ),

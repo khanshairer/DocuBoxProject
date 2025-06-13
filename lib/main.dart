@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'common/app_theme.dart';
-import 'common/dark_theme.dart' as DocuBoxDarkTheme;
+import 'common/dark_theme.dart';
 import 'routing/app_router.dart';
 import 'providers/theme_settings_provider.dart';
 
@@ -66,7 +66,7 @@ class MyApp extends ConsumerWidget {
       // Get the base theme
       final baseTheme =
           isDark
-              ? DocuBoxDarkTheme.DarkTheme.darkTheme(
+              ? DarkTheme.darkTheme(
                 fontSizeFactor: fontSizeFactor,
                 brightnessFactor: brightnessFactor,
               )

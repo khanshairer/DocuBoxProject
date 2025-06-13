@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -167,6 +168,12 @@ class _SignupPageState extends State<SignupPage> {
                         : const Text("Sign Up"),
               ),
             ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () => context.go('/login'),
+              child: Text("Already have an accout? Login"),
+            ),
+
             const SizedBox(height: 10),
             GestureDetector(
               onTap: _signupWithGoogle,
