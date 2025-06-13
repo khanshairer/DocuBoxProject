@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/profile_image_provider.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/homepage_menu_bar_widget.dart';
+// import 'package:flutter/foundation.dart'; // No longer needed for debugPrint
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -88,7 +89,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               userData['username'] ?? _currentUser!.displayName ?? '';
           if (mounted) {
             setState(() {
-              _currentImageUrl = userData['imageUrl'];
+              _currentImageUrl = userData['imageUrl'] as String?;
             });
           }
         }
@@ -105,7 +106,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     } finally {
       if (mounted) {
         // Update the global profile image provider after loading
-        ref.read(profileImageProvider).updateImage(_currentImageUrl);
+        ref.read(profileImageProvider.notifier).refreshProfileImage();
         setState(() {
           _isLoading = false; // Hide loading indicator
         });
@@ -195,7 +196,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         return;
       }
 
-      // FIX: Ensure _profileImage is set from the XFile path
       if (mounted) {
         setState(() => _profileImage = File(image.path));
       }
@@ -204,7 +204,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         'profile-pictures/${_currentUser!.uid}.jpg',
       );
 
-      // Check if _profileImage is null before attempting to upload
       if (_profileImage == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +227,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           .set({'imageUrl': downloadUrl}, SetOptions(merge: true));
 
       if (mounted) {
-        ref.read(profileImageProvider).updateImage(downloadUrl);
+        ref
+            .read(profileImageProvider.notifier)
+            .refreshProfileImage(); // Notify global state
         setState(() {
           _currentImageUrl = downloadUrl; // Update the stored URL
           _profileImage = null; // Clear the local file reference AFTER upload
@@ -243,7 +244,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } on FirebaseException catch (e) {
-      // Catch Firebase specific exceptions
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -311,7 +311,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
 
       if (mounted) {
-        ref.read(profileImageProvider).updateImage(null); // Notify global state
+        ref
+            .read(profileImageProvider.notifier)
+            .refreshProfileImage(); // Notify global state
       }
 
       if (mounted) {
@@ -320,7 +322,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } on FirebaseException catch (e) {
-      // Catch Firebase specific exceptions
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -398,7 +399,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         email: _currentUser!.email!,
         password: _currentPasswordController.text,
       );
-
       await _currentUser!.reauthenticateWithCredential(credential);
       await _currentUser!.updatePassword(_newPasswordController.text);
 
@@ -528,7 +528,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                         width: 150,
                                         height: 150,
                                       )
-                                      : _currentImageUrl != null
+                                      : _currentImageUrl != null &&
+                                          _currentImageUrl!.isNotEmpty
                                       ? Image.network(
                                         _currentImageUrl!,
                                         fit: BoxFit.cover,

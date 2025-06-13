@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
 // Import from the new consolidated widgets folder
@@ -250,8 +251,7 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
         actions: [
           IconButton(
             onPressed: () {
-              // Using pop() to go back to the previous screen in the GoRouter stack
-              Navigator.of(context).pop();
+              context.go('/');
             },
             icon: const Icon(Icons.home),
           ),

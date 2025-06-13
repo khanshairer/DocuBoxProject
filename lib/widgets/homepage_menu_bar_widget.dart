@@ -1,120 +1,87 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_state_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/profile_image_provider.dart'; // Ensure this import is correct
 
-/// My custom Drawer widget for the HomePage menu.
-/// It now directly watches necessary providers using Riverpod.
 class HomePageMenuBar extends ConsumerWidget {
-  // Keep as ConsumerWidget
   const HomePageMenuBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Access ref here
-    final authNotifier = ref.watch(
-      authStateProvider.notifier,
-    ); // Get notifier for signOut
-    final currentUser =
-        ref.watch(authStateProvider).currentUser; // Watch current user
+    final currentUser = FirebaseAuth.instance.currentUser;
     final profileImageState = ref.watch(
       profileImageProvider,
-    ); // Watch profile image state
-
-    // Get the current user's display name or email, prioritizing display name
-    final String userDisplayName =
-        currentUser?.displayName?.isNotEmpty == true
-            ? currentUser!.displayName!
-            : currentUser?.email ?? 'Logged In User';
+    ); // This is an AsyncValue<String?>
 
     return Drawer(
       child: ListView(
-        padding: EdgeInsets.zero, // Remove default ListView padding
+        padding: EdgeInsets.zero,
         children: <Widget>[
-          // My Drawer header, showing user info and profile image
           DrawerHeader(
             decoration: BoxDecoration(
-              color:
-                  Theme.of(
-                    context,
-                  ).colorScheme.primary, // Uses theme's primary color
+              color: Theme.of(context).colorScheme.primary,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor:
-                      Theme.of(context)
-                          .colorScheme
-                          .onPrimary, // Background color that contrasts primary
-                  // The child property is used here to show the loading indicator
-                  child: ClipOval(
-                    // Clip the image/icon to an oval shape
-                    child: SizedBox.expand(
-                      // Make the child fill the CircleAvatar
+                profileImageState.when(
+                  data: (imageUrl) {
+                    return CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      backgroundImage:
+                          (imageUrl != null && imageUrl.isNotEmpty)
+                              ? NetworkImage(imageUrl)
+                              : null,
                       child:
-                          (profileImageState.imageUrl != null &&
-                                  profileImageState.imageUrl!.isNotEmpty)
-                              ? Image.network(
-                                profileImageState.imageUrl!,
-                                fit: BoxFit.cover,
-                                // Show a loading indicator while the image is loading
-                                loadingBuilder: (
-                                  BuildContext context,
-                                  Widget child,
-                                  ImageChunkEvent? loadingProgress,
-                                ) {
-                                  if (loadingProgress == null) {
-                                    return child; // Image finished loading
-                                  }
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress
-                                              .cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Theme.of(context).colorScheme.primary,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                // Show a person icon if the image fails to load
-                                errorBuilder:
-                                    (context, error, stackTrace) => Icon(
-                                      Icons.person,
-                                      size: 30,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                              )
-                              : Icon(
-                                // Fallback icon if no image URL
+                          (imageUrl == null || imageUrl.isEmpty)
+                              ? Icon(
                                 Icons.person,
                                 size: 30,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                    ),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withAlpha(150),
+                              )
+                              : null,
+                    );
+                  },
+                  loading:
+                      () => const CircleAvatar(
+                        radius: 30,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  error:
+                      (err, _) => CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        child: Icon(
+                          Icons.error,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                ),
+
+                const SizedBox(height: 10),
+                Text(
+                  currentUser?.displayName ?? currentUser?.email ?? 'Guest',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 18,
                   ),
                 ),
-                const SizedBox(height: 8),
                 Text(
-                  userDisplayName, // Display fetched user name or email
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color:
-                        Theme.of(context)
-                            .colorScheme
-                            .onPrimary, // Text color that contrasts primary
-                    fontWeight: FontWeight.bold,
+                  currentUser?.email ?? '',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary.withAlpha(
+                      (255 * 0.7).round(),
+                    ), // <--- CHANGED HERE
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-
           // Home option (My Documents)
           ListTile(
             leading: Icon(
@@ -127,7 +94,6 @@ class HomePageMenuBar extends ConsumerWidget {
             ),
             onTap: () {
               if (context.mounted) {
-                // Ensure widget is still mounted
                 Navigator.pop(context); // Close the drawer
                 context.go('/'); // Navigate to Home (root path)
               }
@@ -145,7 +111,8 @@ class HomePageMenuBar extends ConsumerWidget {
             ),
             onTap: () {
               if (context.mounted) {
-                context.go('/document_upload');
+                Navigator.pop(context); // Close the drawer
+                context.go('/document-upload');
               }
             },
           ),
@@ -217,17 +184,19 @@ class HomePageMenuBar extends ConsumerWidget {
               }
             },
           ),
-
           const Divider(), // My visual divider
           // Logout option
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
+              await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 Navigator.pop(context); // Close the drawer
+                context.go(
+                  '/auth',
+                ); // Navigate to authentication page (assuming this is your login screen)
               }
-              await authNotifier.signOut(); // Perform logout
             },
           ),
         ],
