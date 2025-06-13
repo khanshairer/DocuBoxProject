@@ -59,22 +59,26 @@ class UserService {
     }
   }
 
-  static Future<void> saveUserToken(String token) async {
+  static Future<void> saveUserToken(String token, {bool? notificationsEnabled}) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return; // Don't proceed if no user is logged in
+    if (user == null) return;
 
     try {
-      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+     final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
 
-      // Use FieldValue.arrayUnion to add the token to the array.
-      // This is great because it only adds the token if it's not already present.
-      await userRef.update({
-        'fcmTokens': FieldValue.arrayUnion([token]),
-      });
+     // Build the update payload
+      final Map<String, dynamic> updates = {
+       'fcmTokens': FieldValue.arrayUnion([token]),
+     };
+
+      // Optionally update notification setting
+      if (notificationsEnabled != null) {
+       updates['notificationsEnabled'] = notificationsEnabled;
+      }
+
+     await userRef.set(updates, SetOptions(merge: true));
     } catch (e) {
-      // This can happen if the user document doesn't exist yet.
-      // You could add more robust error handling or create the doc if needed.
-      debugPrint('Error saving user token: $e');
+     debugPrint('Error saving user token/settings: $e');
     }
   }
 
@@ -88,4 +92,17 @@ class UserService {
       rethrow;
     }
   }
+
+  static Future<void> updateNotificationPreference(bool enabled) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final ref = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      await ref.set({'notificationsEnabled': enabled}, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Failed to update notification setting: $e');
+    }
+  }
+
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_settings_provider.dart';
+import '../providers/notification_settings_provider.dart';
+import '../services/user_service.dart';
 import 'package:go_router/go_router.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -10,7 +12,8 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeSettings = ref.watch(themeSettingsProvider);
     final themeNotifier = ref.read(themeSettingsProvider.notifier);
-    
+    final notificationsEnabled = ref.watch(notificationEnabledProvider);
+    final notificationsNotifier = ref.read(notificationEnabledProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +28,7 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Theme Mode Toggle (Modified for default light theme)
+          // Theme Mode Toggle
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -51,6 +54,8 @@ class SettingsPage extends ConsumerWidget {
                       );
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
+                    inactiveThumbColor: Colors.grey.shade400,
+                    inactiveTrackColor: Colors.grey.shade300,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -89,10 +94,7 @@ class SettingsPage extends ConsumerWidget {
                       themeNotifier.setBrightness(value);
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
-                    // FIX: Replaced withOpacity with withAlpha for better precision
-                    inactiveColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withAlpha((255 * 0.3).round()),
+                    inactiveColor: Theme.of(context).colorScheme.primary.withAlpha((255 * 0.3).round()),
                   ),
                   Center(
                     child: Text(
@@ -105,6 +107,7 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
 
+          // Font Size Controls
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
@@ -151,27 +154,45 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
 
+          // Notification Toggle with Firestore sync
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text('Notification Settings'),
-              trailing: Switch(
-                value: true,
-                onChanged: (bool value) {},
-                activeColor: Theme.of(context).colorScheme.primary,
-              ),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Go to detailed notification settings'),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.notifications),
+                      SizedBox(width: 16),
+                      Text('Notification Settings'),
+                    ],
                   ),
-                );
-              },
+                  Switch(
+                    value: notificationsEnabled,
+                    onChanged: (bool value) async {
+                      notificationsNotifier.state = value;
+                      await UserService.updateNotificationPreference(value);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(value
+                              ? 'Notifications enabled'
+                              : 'Notifications disabled'),
+                        ),
+                      );
+                    },
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    inactiveThumbColor: Colors.grey.shade400,
+                    inactiveTrackColor: Colors.grey.shade300,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
