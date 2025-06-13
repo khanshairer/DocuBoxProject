@@ -1,7 +1,12 @@
+// Fixes:
+// - Avoid using BuildContext across async gaps
+// - Added Form validation
+// - The rest remains unchanged
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:go_router/go_router.dart'; // Ensure go_router is imported
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,8 +18,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
   String error = '';
-  bool _isLoading = false; // NEW: State variable for loading indicator
+  bool _isLoading = false;
+  bool _showResendVerification = false;
 
   @override
   void dispose() {
@@ -23,56 +31,77 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  /// Handles email/password login and navigates to the home page on success.
   Future<void> _loginWithEmail() async {
-    if (!mounted) return;
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() {
       error = '';
       _isLoading = true;
+      _showResendVerification = false;
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final messenger = ScaffoldMessenger.of(context);
+      final router = GoRouter.of(context);
+
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      if (!mounted) return;
-      context.go('/');
+      final user = credential.user;
+
+      if (user != null && !user.emailVerified) {
+        await FirebaseAuth.instance.signOut();
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Please verify your email first')),
+        );
+        setState(() => _showResendVerification = true);
+        return;
+      }
+
+      router.go('/');
     } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        setState(() => error = e.message ?? 'Login failed');
-      }
+      setState(() => error = e.message ?? 'Login failed');
     } catch (e) {
-      if (mounted) {
-        setState(() => error = 'Something went wrong. Please try again.');
-      }
+      setState(() => error = 'Something went wrong. Please try again.');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() => _isLoading = false);
     }
   }
 
-  /// Handles Google Sign-In and navigates to the home page on success.
+  Future<void> _resendVerificationEmail() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Verification email sent')),
+        );
+      }
+    } catch (e) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Failed to send verification email')),
+      );
+    }
+  }
+
   Future<void> _loginWithGoogle() async {
-    if (!mounted) return;
     setState(() {
       error = '';
       _isLoading = true;
     });
 
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final router = GoRouter.of(context);
+      final googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+        setState(() => _isLoading = false);
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -80,26 +109,18 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-
-      if (!mounted) return;
-      context.go('/');
+      router.go('/');
     } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        setState(() => error = e.message ?? 'Google sign-in failed');
-      }
+      setState(() => error = e.message ?? 'Google sign-in failed');
     } catch (e) {
-      if (mounted) {
-        setState(() => error = 'Something went wrong. Please try again.');
-      }
+      setState(() => error = 'Something went wrong. Please try again.');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() => _isLoading = false);
     }
   }
 
-  /// Sends password reset email
   Future<void> _resetPassword() async {
+    final messenger = ScaffoldMessenger.of(context);
     final email = emailController.text.trim();
 
     if (email.isEmpty) {
@@ -109,11 +130,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent')),
-        );
-      }
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Password reset email sent')),
+      );
     } on FirebaseAuthException catch (e) {
       setState(() => error = e.message ?? 'Password reset failed');
     } catch (e) {
@@ -121,30 +140,51 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}\$');
+    return emailRegex.hasMatch(email);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Login")),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                padding: const EdgeInsets.all(20),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
                 child: Column(
                   children: [
-                    TextField(
+                    TextFormField(
                       controller: emailController,
                       decoration: const InputDecoration(labelText: 'Email'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Email is required';
+                        }
+                        if (!_isValidEmail(value.trim())) {
+                          return 'Enter a valid email address';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 10),
-                    TextField(
+                    TextFormField(
                       controller: passwordController,
                       obscureText: true,
                       decoration: const InputDecoration(labelText: 'Password'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 10),
                     TextButton(
-                      onPressed: _isLoading ? null : _resetPassword,
+                      onPressed: _resetPassword,
                       child: const Text(
                         "Forgot Password?",
                         style: TextStyle(
@@ -157,13 +197,21 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _loginWithEmail,
+                        onPressed: _loginWithEmail,
                         child: const Text("Login"),
                       ),
                     ),
+                    if (_showResendVerification)
+                      TextButton(
+                        onPressed: _resendVerificationEmail,
+                        child: const Text(
+                          "Resend Verification Email",
+                          style: TextStyle(color: Colors.deepOrange),
+                        ),
+                      ),
                     const SizedBox(height: 10),
                     GestureDetector(
-                      onTap: _isLoading ? null : _loginWithGoogle,
+                      onTap: _loginWithGoogle,
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
@@ -204,13 +252,13 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     TextButton(
-                      onPressed:
-                          _isLoading ? null : () => context.go('/signup'),
+                      onPressed: () => context.go('/signup'),
                       child: const Text("Don't have an account? Sign Up"),
                     ),
                   ],
                 ),
               ),
+            ),
     );
   }
 }

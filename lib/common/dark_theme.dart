@@ -116,17 +116,15 @@ class DarkTheme {
       ),
 
       searchBarTheme: SearchBarThemeData(
-        backgroundColor: MaterialStateProperty.all(const Color(0xFF1E1E1E)),
-        elevation: MaterialStateProperty.all(4),
-        shape: MaterialStateProperty.all(
+        backgroundColor: WidgetStateProperty.all(const Color(0xFF1E1E1E)),
+        elevation: WidgetStateProperty.all(4),
+        shape: WidgetStateProperty.all(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        textStyle: MaterialStateProperty.all(
+        textStyle: WidgetStateProperty.all(
           TextStyle(color: Colors.white, fontSize: 16 * safeFontSizeFactor),
         ),
-        hintStyle: MaterialStateProperty.all(
-          TextStyle(color: Colors.grey[500]),
-        ),
+        hintStyle: WidgetStateProperty.all(TextStyle(color: Colors.grey[500])),
       ),
 
       sliderTheme: SliderThemeData(

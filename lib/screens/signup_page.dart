@@ -1,3 +1,4 @@
+// ======= signup_page.dart =======
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -18,12 +19,34 @@ class _SignupPageState extends State<SignupPage> {
   String error = '';
   bool isCheckingUsername = false;
 
+  Future<bool> _isUsernameTaken(String username) async {
+    try {
+      final result =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
+
+      return result.docs.isNotEmpty;
+    } catch (e) {
+      debugPrint("Username check failed: $e");
+      return false;
+    }
+  }
+
   Future<void> _signup() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final username = usernameController.text.trim();
 
-    if (username.isEmpty || username.length > 15) {
+    if (username.isEmpty) {
+      setState(() => error = 'Username is required');
+      return;
+    }
+
+    if (username.length > 15) {
+      setState(() => error = 'Username must be at most 15 characters');
       return;
     }
 
@@ -32,39 +55,17 @@ class _SignupPageState extends State<SignupPage> {
       error = '';
     });
 
+    if (await _isUsernameTaken(username)) {
+      setState(() => isCheckingUsername = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Username already taken")));
+      }
+      return;
+    }
+
     try {
-      // Check if username exists
-      final usernameSnapshot =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .where('username', isEqualTo: username)
-              .limit(1)
-              .get();
-
-      if (usernameSnapshot.docs.isNotEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Username already exists")),
-          );
-        }
-        setState(() => isCheckingUsername = false);
-        return;
-      }
-
-      // Check if email already used
-      final emailMethods = await FirebaseAuth.instance
-          .fetchSignInMethodsForEmail(email);
-      if (emailMethods.isNotEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text("Email already in use")));
-        }
-        setState(() => isCheckingUsername = false);
-        return;
-      }
-
-      // Create user
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
@@ -77,13 +78,25 @@ class _SignupPageState extends State<SignupPage> {
         });
 
         await user.updateDisplayName(username);
+        await user.sendEmailVerification();
       }
 
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Verification email sent. Please check your inbox."),
+        ),
+      );
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        setState(() => error = e.message ?? 'Signup failed');
+        if (e.code == 'email-already-in-use') {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Email already exists")));
+        } else {
+          setState(() => error = e.message ?? 'Signup failed');
+        }
       }
     } finally {
       if (mounted) {
