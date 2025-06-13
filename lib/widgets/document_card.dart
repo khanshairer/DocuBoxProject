@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/document.dart';
 import 'share_settings_modal.dart';
+import '../screens/view_document_page.dart';
 
 class DocumentCard extends StatelessWidget {
   final Document document;
@@ -53,10 +54,9 @@ class DocumentCard extends StatelessWidget {
                           );
                           break;
                         case 'view':
-                          // TODO: Implement document viewing
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Viewing ${document.name} coming soon!'),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ViewDocumentPage(document: document),
                             ),
                           );
                           break;
@@ -114,10 +114,9 @@ class DocumentCard extends StatelessWidget {
                 alignment: Alignment.bottomRight,
                 child: TextButton.icon(
                   onPressed: () {
-                    // TODO: Implement document viewing
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Viewing ${document.name} coming soon!'),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ViewDocumentPage(document: document),
                       ),
                     );
                   },
