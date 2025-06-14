@@ -2,9 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-// import 'package:flutter/material.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
-// import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
@@ -14,10 +12,10 @@ class NotificationService {
     // Initialize timezone
     tz.initializeTimeZones();
 
-    // iOS: request permissions
+    // Request permissions
     await FirebaseMessaging.instance.requestPermission();
 
-    // Android + iOS local notifications
+    // Android + iOS local notifications setup
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -39,7 +37,6 @@ class NotificationService {
     });
   }
 
-  // Add this inside NotificationService class
   Future<void> requestPermission() async {
     await FirebaseMessaging.instance.requestPermission();
   }
@@ -77,8 +74,10 @@ class NotificationService {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    final firestore = FirebaseFirestore.instance;
     final now = DateTime.now();
-    final snapshot = await FirebaseFirestore.instance
+
+    final snapshot = await firestore
         .collection('documents')
         .where('userId', isEqualTo: user.uid)
         .get();
@@ -90,10 +89,30 @@ class NotificationService {
       final diffDays = expiry.difference(now).inDays;
 
       if (diffDays == 3 || diffDays == 7) {
-        await _showLocalNotification(
-          title: 'Upcoming Document Expiry',
-          body: '$name is expiring in $diffDays days',
-        );
+        final title = 'Upcoming Document Expiry';
+        final body = '$name is expiring in $diffDays days';
+        final notificationId = '${doc.id}_$diffDays';
+
+        final notifRef = firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('notifications')
+            .doc(notificationId);
+
+        final notifDoc = await notifRef.get();
+
+        // Always show in-app notification
+        await _showLocalNotification(title: title, body: body);
+
+        // Save to Firestore only if not already saved
+        if (!notifDoc.exists) {
+          await notifRef.set({
+            'title': title,
+            'body': body,
+            'createdAt': Timestamp.now(),
+            'read': false,
+          });
+        }
       }
     }
   }

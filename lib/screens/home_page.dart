@@ -71,9 +71,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         actions: [
           IconButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon!')),
-              );
+              context.push('/notifications');
             },
             icon: const Icon(Icons.notifications_active),
           ),
