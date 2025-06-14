@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import '../models/document.dart';
+import 'package:dio/dio.dart';
 
 class ViewDocumentPage extends StatefulWidget {
   final Document document;
@@ -221,6 +222,51 @@ class _ViewDocumentPageState extends State<ViewDocumentPage> {
     );
   }
 
+  Future<void> _downloadDocument() async {
+    if (!widget.document.isDownloadable) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Download is not allowed for this document'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final dir = await getExternalStorageDirectory();
+      final downloadsDir = dir ?? await getApplicationDocumentsDirectory();
+      final filePath = '${downloadsDir.path}/${widget.document.fileName}';
+
+      final dio = Dio();
+      await dio.download(
+        widget.document.downloadUrl,
+        filePath,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded to $filePath'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading document: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -231,6 +277,14 @@ class _ViewDocumentPageState extends State<ViewDocumentPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         elevation: 2,
+        actions: [
+          if (widget.document.isDownloadable)
+            IconButton(
+              onPressed: _downloadDocument,
+              icon: const Icon(Icons.download),
+              tooltip: 'Download',
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
