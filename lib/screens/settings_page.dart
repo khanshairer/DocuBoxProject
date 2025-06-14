@@ -35,9 +35,11 @@ class SettingsPage extends ConsumerWidget {
             leading: Icon(Icons.backup),
             title: Text('Create Local Backup'),
             onTap: () async {
+              final messenger = ScaffoldMessenger.of(context);  // capture context early
               final userId = FirebaseAuth.instance.currentUser?.uid;
+
               if (userId == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('User not logged in.')),
                 );
                 return;
@@ -45,16 +47,17 @@ class SettingsPage extends ConsumerWidget {
 
               try {
                 await BackupService.performLocalEncryptedBackup(userId);
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Backup completed successfully.')),
                 );
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Backup failed: $e')),
                 );
               }
             },
           ),
+
 
 
           // Theme Mode Toggle
