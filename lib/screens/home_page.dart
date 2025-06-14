@@ -7,6 +7,7 @@ import '../providers/documents_provider.dart';
 import '../widgets/document_card.dart';
 import '../services/notification_service.dart';
 import '../services/user_service.dart';
+import '../providers/notification_settings_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -22,7 +23,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    NotificationService.checkAndNotifyExpiringDocuments();
+    final enabled = ref.read(notificationEnabledProvider);
+    if (enabled) {
+      NotificationService.checkAndNotifyExpiringDocuments();
+    }
     _setupNotifications(); // Call the notification setup here.
   }
 
