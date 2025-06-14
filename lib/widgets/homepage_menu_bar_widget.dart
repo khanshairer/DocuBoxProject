@@ -116,6 +116,23 @@ class HomePageMenuBar extends ConsumerWidget {
               }
             },
           ),
+          //Trusted Contacts
+          ListTile(
+            leading: Icon(
+              Icons.contacts,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Trusted Contact',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+            onTap: () {
+              if (context.mounted) {
+                Navigator.pop(context); // Close the drawer
+                context.go('/trusted-contacts');
+              }
+            },
+          ),
           // Shared Documents option
           ListTile(
             leading: Icon(

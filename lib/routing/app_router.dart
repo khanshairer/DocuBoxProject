@@ -13,6 +13,7 @@ import '../screens/signup_page.dart';
 import '../providers/auth_state_provider.dart';
 import '../providers/welcome_state_provider.dart';
 import '../screens/notification_page.dart';
+import '../screens/trusted_contact.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
@@ -66,6 +67,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationPage(),
+      ),
+      // In app_router.dart
+      GoRoute(
+        path: '/trusted-contacts',
+        name: 'trusted-contacts',
+        builder: (context, state) {
+          final currentUserId =
+              ref.read(authStateProvider).currentUser?.uid ?? '';
+          return TrustedContact(currentUserId: currentUserId);
+        },
       ),
     ],
     redirect: (context, state) {
