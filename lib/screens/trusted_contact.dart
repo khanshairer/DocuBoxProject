@@ -355,7 +355,7 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
       setState(() {
         _allUsers =
             snapshot.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
+              final data = doc.data();
               return {
                 'id': doc.id,
                 'name':
