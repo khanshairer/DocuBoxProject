@@ -180,6 +180,9 @@ class _DocumentUploadPageState extends State<DocumentUploadPage> {
 
       _showSuccessSnackBar('Document uploaded successfully!');
       _clearForm();
+      if (mounted) {
+        context.go('/');  // redirect to home page
+      }      
     } catch (e) {
       _showErrorSnackBar('Upload failed: ${e.toString()}');
     } finally {
