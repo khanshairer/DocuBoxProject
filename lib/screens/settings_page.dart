@@ -179,6 +179,8 @@ class SettingsPage extends ConsumerWidget {
                       notificationsNotifier.state = value;
                       await UserService.updateNotificationPreference(value);
 
+                      if (!context.mounted) return; // THE FIX: Check if the context is still valid before using it.
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(value
