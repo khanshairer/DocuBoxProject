@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import '../models/document.dart';
+import 'package:dio/dio.dart';
 
 class SharedDocumentViewerPage extends StatefulWidget {
   final Document document;
@@ -51,11 +52,24 @@ class _SharedDocumentViewerPageState extends State<SharedDocumentViewerPage> {
     }
 
     try {
-      final Uri url = Uri.parse(widget.document.downloadUrl);
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch $url';
+      final dir = await getExternalStorageDirectory();
+      final downloadsDir = dir ?? await getApplicationDocumentsDirectory();
+      final filePath = '${downloadsDir.path}/${widget.document.fileName}';
+
+      final dio = Dio();
+      await dio.download(
+        widget.document.downloadUrl,
+        filePath,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloaded to $filePath'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
