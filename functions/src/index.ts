@@ -15,9 +15,10 @@ export const sendExpiryNotifications = functions.pubsub
     for (const userDoc of usersSnapshot.docs) {
       const userId = userDoc.id;
       const fcmToken = userDoc.data().fcmToken;
+      const notificationsEnabled = userDoc.data().notificationsEnabled ?? true;
 
-      if (!fcmToken) {
-        console.log(`User ${userId} has no FCM token. Skipping.`);
+      if (!fcmToken || !notificationsEnabled) {
+        console.log(`⏭️ Skipping ${userId} - No token or notifications disabled.`);
         continue;
       }
 
@@ -38,18 +39,32 @@ export const sendExpiryNotifications = functions.pubsub
 
         if (daysLeft === 3 || daysLeft === 7) {
           const docName = data.name || "Unnamed Document";
+          const body = `${docName} is expiring in ${daysLeft} days.`;
 
           const message = {
             token: fcmToken,
             notification: {
               title: "📁 Document Expiry Reminder",
-              body: `${docName} is expiring in ${daysLeft} days.`,
+              body: body,
             },
           };
 
           try {
             await messaging.send(message);
             console.log(`✅ Sent to ${userId}: ${docName} (${daysLeft} days left)`);
+
+            // ⬇️ Save to Firestore notifications
+            await db
+              .collection("users")
+              .doc(userId)
+              .collection("notifications")
+              .add({
+                title: "📁 Document Expiry Reminder",
+                body: body,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                read: false,
+              });
+
           } catch (error) {
             console.error(`❌ Error sending to ${userId}:`, error);
           }

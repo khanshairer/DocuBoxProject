@@ -12,6 +12,7 @@ import '../screens/shared_documents_page.dart';
 import '../screens/signup_page.dart';
 import '../providers/auth_state_provider.dart';
 import '../providers/welcome_state_provider.dart';
+import '../screens/notification_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
@@ -61,6 +62,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/shared-documents',
         name: 'shared_documents',
         builder: (context, state) => const SharedDocumentsPage(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationPage(),
       ),
     ],
     redirect: (context, state) {
