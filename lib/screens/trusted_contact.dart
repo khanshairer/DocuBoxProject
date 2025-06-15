@@ -41,8 +41,6 @@ class _TrustedContactState extends State<TrustedContact> {
       final token = userDoc['fcmToken'];
       if (token == null) return;
 
-      // In a real app, you would send this via Cloud Functions
-      // This is a simplified version for demonstration
       await FirebaseFirestore.instance
           .collection('notifications')
           .doc(userId)
@@ -54,7 +52,7 @@ class _TrustedContactState extends State<TrustedContact> {
             'read': false,
           });
     } catch (e) {
-      debugPrint('Error sending notification: $e');
+      // error intentionally ignored
     }
   }
 
@@ -84,13 +82,12 @@ class _TrustedContactState extends State<TrustedContact> {
               'id': doc.id,
               'name':
                   data?['displayName'] ??
-                  data?['name'] ??
-                  data?['email']?.split('@').first ??
-                  'Unknown',
-              'email': data?['email'] ?? 'No email',
+                  data?['username'] ??
+                  (data?['email']?.toString().split('@').first ??
+                      'Unknown User'),
+              'email': data?['email']?.toString() ?? 'No email',
             };
           } catch (e) {
-            debugPrint('Error loading user ${doc.id}: $e');
             return {
               'id': doc.id,
               'name': 'Error loading',
@@ -107,38 +104,71 @@ class _TrustedContactState extends State<TrustedContact> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load contacts: ${e.toString()}';
+        _errorMessage = 'Failed to load contacts';
       });
     }
   }
 
   Future<void> _deleteContact(String contactId) async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-      await FirebaseFirestore.instance
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+
+      final trustedContactRef = FirebaseFirestore.instance
           .collection('users')
           .doc(widget.currentUserId)
           .collection('trustedContacts')
-          .doc(contactId)
-          .delete();
+          .doc(contactId);
 
+      final pplTrustURef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(contactId)
+          .collection('pplTrustU')
+          .doc(widget.currentUserId);
+
+      final trustedContactExists = (await trustedContactRef.get()).exists;
+      final pplTrustUExists = (await pplTrustURef.get()).exists;
+
+      if (trustedContactExists) {
+        batch.delete(trustedContactRef);
+      }
+      if (pplTrustUExists) {
+        batch.delete(pplTrustURef);
+      }
+
+      await batch.commit();
       await _loadTrustedContacts();
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to delete contact: ${e.toString()}';
+        _errorMessage = 'Failed to delete contact';
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete contact. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _saveTrustedContacts(List<String> contactIds) async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
     try {
       final batch = FirebaseFirestore.instance.batch();
@@ -147,134 +177,73 @@ class _TrustedContactState extends State<TrustedContact> {
           .doc(widget.currentUserId)
           .collection('trustedContacts');
 
-      // Clear existing
       final existing = await contactsRef.get();
       for (var doc in existing.docs) {
         batch.delete(doc.reference);
+
+        final pplTrustURef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(doc.id)
+            .collection('pplTrustU')
+            .doc(widget.currentUserId);
+        batch.delete(pplTrustURef);
       }
 
-      // Add new and send notifications
       for (var userId in contactIds) {
+        if (userId == widget.currentUserId) continue;
+
         batch.set(contactsRef.doc(userId), {
           'addedAt': FieldValue.serverTimestamp(),
           'userId': userId,
         });
 
-        // Get contact name for notification
+        final trustedByRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('pplTrustU')
+            .doc(widget.currentUserId);
+
+        batch.set(trustedByRef, {
+          'addedAt': FieldValue.serverTimestamp(),
+          'userId': widget.currentUserId,
+        });
+
         final contactDoc =
             await FirebaseFirestore.instance
                 .collection('users')
                 .doc(userId)
                 .get();
-        final contactName = contactDoc['name'] ?? 'Someone';
+
+        final data = contactDoc.data();
+        final contactName =
+            data?['displayName'] ??
+            data?['username'] ??
+            data?['email']?.toString().split('@').first ??
+            'Someone';
 
         await _sendNotification(userId, contactName);
       }
 
       await batch.commit();
       await _loadTrustedContacts();
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to save contacts: ${e.toString()}';
+        _errorMessage = 'Failed to save contacts';
       });
-    }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trusted Contacts'),
-        actions: [
-          IconButton(
-            onPressed: () => _showContactSelector(),
-            icon: Icon(Icons.add),
-          ),
-          IconButton(
-            onPressed: () => context.go('/'),
-            icon: const Icon(Icons.home),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                const Text(
-                  'My Trusted Contacts',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => _showContactSelector(),
-                  child: const Text('Manage Contacts'),
-                ),
-              ],
-            ),
-          ),
-          if (_errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          Expanded(
-            child:
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _trustedContacts.isEmpty
-                    ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.people_outline, size: 64),
-                          SizedBox(height: 16),
-                          Text('No trusted contacts yet'),
-                          SizedBox(height: 8),
-                          Text('Add people you trust to access your documents'),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      itemCount: _trustedContacts.length,
-                      itemBuilder: (context, index) {
-                        if (index >= _trustedContacts.length) {
-                          return const SizedBox.shrink();
-                        }
-                        final contact = _trustedContacts[index];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            child: Text(
-                              contact['name'] is String &&
-                                      contact['name'].isNotEmpty
-                                  ? contact['name'][0]
-                                  : '?',
-                            ),
-                          ),
-                          title: Text(contact['name']?.toString() ?? 'Unknown'),
-                          subtitle: Text(
-                            contact['email']?.toString() ?? 'No email',
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed:
-                                () => _showDeleteDialog(
-                                  contact['id'],
-                                  contact['name'],
-                                ),
-                          ),
-                        );
-                      },
-                    ),
-          ),
-        ],
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save contacts. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showDeleteDialog(String contactId, String contactName) {
@@ -310,14 +279,102 @@ class _TrustedContactState extends State<TrustedContact> {
       builder:
           (context) => ContactSelectorDialog(
             currentUserId: widget.currentUserId,
-            initialSelection:
-                _trustedContacts.map((c) => c['id'] as String).toList(),
+            initialSelection: [
+              ..._trustedContacts.map((c) => c['id'] as String),
+            ],
           ),
     );
 
     if (selectedContacts != null) {
       await _saveTrustedContacts(selectedContacts);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trusted Contacts'),
+        actions: [
+          IconButton(
+            onPressed: _showContactSelector,
+            icon: const Icon(Icons.add),
+          ),
+          IconButton(
+            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.home),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: const [
+                Text(
+                  'My Trusted Contacts',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          ),
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _trustedContacts.isEmpty
+                    ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.people_outline, size: 64),
+                          SizedBox(height: 16),
+                          Text('No trusted contacts yet'),
+                          SizedBox(height: 8),
+                          Text('Add people you trust to access your documents'),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      itemCount: _trustedContacts.length,
+                      itemBuilder: (context, index) {
+                        final contact = _trustedContacts[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            child: Text(
+                              contact['name'] is String &&
+                                      contact['name'].isNotEmpty
+                                  ? contact['name'][0]
+                                  : '?',
+                            ),
+                          ),
+                          title: Text(contact['name'] ?? 'Unknown'),
+                          subtitle: Text(contact['email'] ?? 'No email'),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed:
+                                () => _showDeleteDialog(
+                                  contact['id'],
+                                  contact['name'],
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -339,7 +396,9 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
   late List<String> _selectedContacts;
   bool _isLoading = true;
   List<Map<String, dynamic>> _allUsers = [];
+  List<Map<String, dynamic>> _filteredUsers = [];
   String? _errorMessage;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -363,50 +422,54 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
               return {
                 'id': doc.id,
                 'name':
-                    data['name'] ??
+                    data['displayName'] ??
                     data['username'] ??
                     data['email']?.split('@').first ??
                     'Unknown User',
                 'email': data['email'] ?? 'No email',
               };
             }).toList();
+        _filteredUsers = List.from(_allUsers);
         _isLoading = false;
         _errorMessage = null;
       });
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load users: ${e.toString()}';
+        _errorMessage = 'Failed to load users';
       });
     }
   }
 
+  void _filterUsers(String query) {
+    setState(() {
+      _filteredUsers =
+          _allUsers.where((user) {
+            final name = user['name']?.toString().toLowerCase() ?? '';
+            final email = user['email']?.toString().toLowerCase() ?? '';
+            return name.contains(query.toLowerCase()) ||
+                email.contains(query.toLowerCase());
+          }).toList();
+    });
+  }
+
   Widget _buildUserList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage != null) {
-      return Center(child: Text(_errorMessage!));
-    }
-
-    if (_allUsers.isEmpty) {
-      return const Center(child: Text('No other users found'));
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_errorMessage != null) return Center(child: Text(_errorMessage!));
+    if (_filteredUsers.isEmpty) {
+      return const Center(child: Text('No users found'));
     }
 
     return ListView.builder(
       shrinkWrap: true,
-      itemCount: _allUsers.length,
+      itemCount: _filteredUsers.length,
       itemBuilder: (context, index) {
-        if (index >= _allUsers.length) {
-          return const SizedBox.shrink();
-        }
-        final user = _allUsers[index];
+        final user = _filteredUsers[index];
         final isSelected = _selectedContacts.contains(user['id']);
 
         return CheckboxListTile(
-          title: Text(user['name']?.toString() ?? 'Unknown'),
-          subtitle: Text(user['email']?.toString() ?? 'No email'),
+          title: Text(user['name'] ?? 'Unknown'),
+          subtitle: Text(user['email'] ?? 'No email'),
           value: isSelected,
           onChanged: (bool? value) {
             setState(() {
@@ -436,7 +499,25 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
       content: SizedBox(
         width: double.maxFinite,
         height: MediaQuery.of(context).size.height * 0.6,
-        child: _buildUserList(),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search users...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                onChanged: _filterUsers,
+              ),
+            ),
+            Expanded(child: _buildUserList()),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -444,12 +525,16 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
           child: const Text('Cancel'),
         ),
         TextButton(
-          onPressed: () {
-            Navigator.pop(context, _selectedContacts);
-          },
+          onPressed: () => Navigator.pop(context, _selectedContacts),
           child: const Text('Save'),
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

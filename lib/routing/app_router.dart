@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../screens/home_page.dart';
 import '../screens/login_page.dart';
@@ -14,6 +15,7 @@ import '../providers/auth_state_provider.dart';
 import '../providers/welcome_state_provider.dart';
 import '../screens/notification_page.dart';
 import '../screens/trusted_contact.dart';
+import '../screens/see_trusted_contacts_document.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
@@ -66,9 +68,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/notifications',
+        name: 'notifications',
         builder: (context, state) => const NotificationPage(),
       ),
-      // In app_router.dart
+
       GoRoute(
         path: '/trusted-contacts',
         name: 'trusted-contacts',
@@ -77,6 +80,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ref.read(authStateProvider).currentUser?.uid ?? '';
           return TrustedContact(currentUserId: currentUserId);
         },
+      ),
+      GoRoute(
+        path: '/trusted-documents',
+        name: 'trusted-documents',
+        builder:
+            (context, state) => SeeTrustedDocumentsPage(
+              currentUserId: FirebaseAuth.instance.currentUser!.uid,
+            ),
       ),
     ],
     redirect: (context, state) {
