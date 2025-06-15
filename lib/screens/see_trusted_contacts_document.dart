@@ -32,22 +32,32 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
   Future<void> _fetchUserDocuments(String userId) async {
     if (_userDocuments.containsKey(userId)) return;
 
-    final docs =
-        await _firestore
-            .collection('documents')
-            .where('userId', isEqualTo: userId)
-            .where('shareWith', arrayContains: widget.currentUserId)
-            .get();
+    try {
+      // Changed to fetch ALL documents by this user, not just shared ones
+      final docs =
+          await _firestore
+              .collection('documents')
+              .where('userId', isEqualTo: userId)
+              .get();
 
-    if (mounted) {
-      setState(() => _userDocuments[userId] = docs.docs);
+      if (mounted) {
+        setState(() => _userDocuments[userId] = docs.docs);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _userDocuments[userId] = []; // Empty list if error occurs
+        });
+      }
     }
   }
 
   String _getUserName(DocumentSnapshot userDoc) {
     final data = userDoc.data() as Map<String, dynamic>?;
-    return data?['username'] ??
-        (data?['email']?.toString().split('@').first ?? 'Unknown User');
+    return data?['displayName'] ??
+        data?['username'] ??
+        data?['email']?.toString().split('@').first ??
+        'Unknown User';
   }
 
   String _getUserEmail(DocumentSnapshot userDoc) {
@@ -128,7 +138,11 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
         stream: _trustedContactsStream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('Error loading contacts'));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -142,46 +156,77 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
             itemBuilder: (context, index) {
               final contact = contacts[index];
               final userId = contact.id;
-              final userName = _getUserName(contact);
-              final userEmail = _getUserEmail(contact);
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: ExpansionTile(
-                  initiallyExpanded: _expandedUsers.contains(userId),
-                  onExpansionChanged: (expanded) {
-                    if (mounted) {
-                      setState(() {
-                        if (expanded) {
-                          _expandedUsers.add(userId);
-                          _fetchUserDocuments(userId);
-                        } else {
-                          _expandedUsers.remove(userId);
+              return FutureBuilder<DocumentSnapshot>(
+                future: _firestore.collection('users').doc(userId).get(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return const ListTile(
+                      leading: CircleAvatar(child: CircularProgressIndicator()),
+                      title: Text('Loading user...'),
+                    );
+                  }
+
+                  if (userSnapshot.hasError || !userSnapshot.hasData) {
+                    return ListTile(
+                      leading: const CircleAvatar(child: Icon(Icons.error)),
+                      title: const Text('Error loading user'),
+                      subtitle: Text('ID: $userId'),
+                    );
+                  }
+
+                  final userDoc = userSnapshot.data!;
+                  final userName = _getUserName(userDoc);
+                  final userEmail = _getUserEmail(userDoc);
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: ExpansionTile(
+                      initiallyExpanded: _expandedUsers.contains(userId),
+                      onExpansionChanged: (expanded) {
+                        if (mounted) {
+                          setState(() {
+                            if (expanded) {
+                              _expandedUsers.add(userId);
+                              _fetchUserDocuments(userId);
+                            } else {
+                              _expandedUsers.remove(userId);
+                            }
+                          });
                         }
-                      });
-                    }
-                  },
-                  leading: CircleAvatar(child: Text(userName[0])),
-                  title: Text(userName),
-                  subtitle: Text(userEmail),
-                  children: [
-                    if (_userDocuments[userId] == null)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (_userDocuments[userId]!.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text('No documents shared by this contact'),
-                      )
-                    else ...[
-                      ..._userDocuments[userId]!.map(
-                        (doc) => _buildDocumentItem(context, doc),
+                      },
+                      leading: CircleAvatar(
+                        child: Text(userName.isNotEmpty ? userName[0] : '?'),
                       ),
-                    ],
-                  ],
-                ),
+                      title: Text(userName),
+                      subtitle: Text(userEmail),
+                      children: [
+                        if (_userDocuments[userId] == null)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        else if (_userDocuments[userId]!.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text('No documents found for this user'),
+                          )
+                        else
+                          Column(
+                            children:
+                                _userDocuments[userId]!
+                                    .map(
+                                      (doc) => _buildDocumentItem(context, doc),
+                                    )
+                                    .toList(),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           );
