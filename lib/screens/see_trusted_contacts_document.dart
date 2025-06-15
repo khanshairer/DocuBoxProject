@@ -119,13 +119,14 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
     }
   }
 
+  // In SeeTrustedDocumentsPage
   void _openDocument(
     BuildContext context,
     String docId,
     Map<String, dynamic> data,
   ) {
     context.push(
-      '/shared-document-view',
+      '/shared-document-view-map', // New dedicated route
       extra: {'documentId': docId, 'documentData': data},
     );
   }

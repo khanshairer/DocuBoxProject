@@ -208,7 +208,7 @@ class HomePageMenuBar extends ConsumerWidget {
               color: Theme.of(context).colorScheme.onSurface,
             ),
             title: Text(
-              'Chat',
+              'Request Document',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             onTap: () {
