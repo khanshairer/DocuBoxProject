@@ -126,7 +126,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
     Map<String, dynamic> data,
   ) {
     context.push(
-      '/shared-document-view-map', // New dedicated route
+      '/shared-document-view/:docId', // New dedicated route
       extra: {'documentId': docId, 'documentData': data},
     );
   }

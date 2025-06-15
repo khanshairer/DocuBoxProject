@@ -110,7 +110,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       //for trusted contacts documents
       GoRoute(
         path: '/shared-document-view/:docId',
-        name: 'shared-document-view',
+        name: 'shared-document-view-by-id',
         builder: (context, state) {
           final docId = state.pathParameters['docId']!;
           return SharedDocumentViewerPageById(documentId: docId);
