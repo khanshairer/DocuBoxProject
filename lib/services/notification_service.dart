@@ -9,24 +9,18 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
-    // Initialize timezone
     tz.initializeTimeZones();
 
-    // Request permissions
     await FirebaseMessaging.instance.requestPermission();
 
-    // Android + iOS local notifications setup
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const InitializationSettings initSettings = InitializationSettings(
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: DarwinInitializationSettings(),
     );
 
     await _localNotificationsPlugin.initialize(initSettings);
 
-    // Handle foreground FCM messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         _showLocalNotification(
@@ -49,15 +43,15 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       'docubox_channel',
       'DocuBox Reminders',
-      channelDescription: 'Notifications for expiring documents',
+      channelDescription: 'Notifications for DocuBox events',
       importance: Importance.max,
       priority: Priority.high,
     );
 
-    const NotificationDetails platformDetails = NotificationDetails(
+    const platformDetails = NotificationDetails(
       android: androidDetails,
       iOS: DarwinNotificationDetails(),
     );
@@ -70,6 +64,7 @@ class NotificationService {
     );
   }
 
+  /// Check for expiring documents and notify if 3 or 7 days left
   static Future<void> checkAndNotifyExpiringDocuments() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -101,19 +96,62 @@ class NotificationService {
 
         final notifDoc = await notifRef.get();
 
-        // Always show in-app notification
+        // Always show local in-app
         await _showLocalNotification(title: title, body: body);
 
-        // Save to Firestore only if not already saved
         if (!notifDoc.exists) {
           await notifRef.set({
             'title': title,
             'body': body,
             'createdAt': Timestamp.now(),
             'read': false,
+            'type': 'expiry',
+            'documentId': doc.id,
           });
         }
       }
+    }
+  }
+
+  /// Triggered when a document is shared with another user
+  static Future<void> notifyDocumentShared({
+    required String sharedWithUid,
+    required String documentName,
+    required String documentId,
+    required String sharedByName,
+  }) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      final title = 'New Shared Document';
+      final body = '$sharedByName shared "$documentName" with you';
+      final notificationId = 'shared_$documentId';
+
+      final notifRef = firestore
+          .collection('users')
+          .doc(sharedWithUid)
+          .collection('notifications')
+          .doc(notificationId);
+
+      final existing = await notifRef.get();
+
+      if (!existing.exists) {
+        print('📬 Creating notification for $sharedWithUid: $documentName');
+        await notifRef.set({
+          'title': title,
+          'body': body,
+          'createdAt': Timestamp.now(),
+          'read': false,
+          'type': 'shared',
+          'documentId': documentId,
+        });
+
+        await _showLocalNotification(title: title, body: body);
+      } else {
+        print('ℹ️ Notification already exists for $sharedWithUid and $documentName');
+      }
+    } catch (e, st) {
+      print('❌ Failed to create shared notification: $e\n$st');
     }
   }
 }

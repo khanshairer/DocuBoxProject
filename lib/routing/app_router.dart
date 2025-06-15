@@ -16,6 +16,8 @@ import '../providers/welcome_state_provider.dart';
 import '../screens/notification_page.dart';
 import '../screens/trusted_contact.dart';
 import '../screens/see_trusted_contacts_document.dart';
+import '../screens/shared_document_viewer_by_id.dart';
+import '../screens/view_document_page_by_id.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authStateProvider);
@@ -79,6 +81,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final currentUserId =
               ref.read(authStateProvider).currentUser?.uid ?? '';
           return TrustedContact(currentUserId: currentUserId);
+        },
+      ),
+      GoRoute(
+        path: '/shared-document-view',
+        name: 'shared-document-view',
+        builder: (context, state) {
+          final docId = state.extra as String;
+          return SharedDocumentViewerPageById(documentId: docId);
+        },
+      ),
+      GoRoute(
+        path: '/view-document',
+        name: 'view-document',
+        builder: (context, state) {
+          final docId = state.extra as String;
+          return ViewDocumentPageById(documentId: docId);
         },
       ),
       GoRoute(

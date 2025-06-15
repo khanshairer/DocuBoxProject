@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user.dart';
 import 'package:flutter/foundation.dart';
+import 'notification_service.dart';
 
 
 class UserService {
@@ -105,4 +106,42 @@ class UserService {
     }
   }
 
+  static Future<void> shareDocumentWithUser({
+    required String sharedWithUid,
+    required String documentId,
+    required String documentName,
+  }) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      // Add document reference under shared user's Firestore path (optional)
+      final sharedRef = firestore
+          .collection('users')
+          .doc(sharedWithUid)
+          .collection('sharedDocuments')
+          .doc(documentId);
+
+      await sharedRef.set({
+        'documentId': documentId,
+        'sharedBy': currentUser.uid,
+        'sharedAt': Timestamp.now(),
+      });
+
+      // Get sharer's display name
+      final sharerName = currentUser.displayName ?? currentUser.email ?? 'Someone';
+
+      // Send notification
+      await NotificationService.notifyDocumentShared(
+        sharedWithUid: sharedWithUid,
+        documentId: documentId,
+        documentName: documentName,
+        sharedByName: sharerName,
+      );
+    } catch (e) {
+      debugPrint('Error sharing document: $e');
+    }
+  }
 }
