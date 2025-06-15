@@ -57,6 +57,7 @@ class NotificationPage extends ConsumerWidget {
     ref.invalidate(notificationsProvider);
     ref.invalidate(unreadNotificationsCountProvider);
 
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('All notifications cleared')),
     );
@@ -93,6 +94,7 @@ class NotificationPage extends ConsumerWidget {
               );
 
               if (confirm == true) {
+                if (!context.mounted) return;
                 await clearAllNotifications(context, ref);
               }
             },
@@ -130,6 +132,7 @@ class NotificationPage extends ConsumerWidget {
                 onDismissed: (_) async {
                   await deleteNotification(ref, notif.id);
 
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text('Notification deleted'),

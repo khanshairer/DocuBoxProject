@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 
@@ -22,10 +23,11 @@ class NotificationService {
     await _localNotificationsPlugin.initialize(initSettings);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.notification != null) {
+      final notif = message.notification;
+      if (notif != null) {
         _showLocalNotification(
-          title: message.notification!.title ?? 'Reminder',
-          body: message.notification!.body ?? '',
+          title: notif.title ?? 'Reminder',
+          body: notif.body ?? '',
         );
       }
     });
@@ -36,7 +38,7 @@ class NotificationService {
   }
 
   Future<String?> getToken() async {
-    return await FirebaseMessaging.instance.getToken();
+    return FirebaseMessaging.instance.getToken();
   }
 
   static Future<void> _showLocalNotification({
@@ -64,7 +66,7 @@ class NotificationService {
     );
   }
 
-  /// Check for expiring documents and notify if 3 or 7 days left
+  /// Notify user of documents expiring in 3 or 7 days
   static Future<void> checkAndNotifyExpiringDocuments() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -96,7 +98,6 @@ class NotificationService {
 
         final notifDoc = await notifRef.get();
 
-        // Always show local in-app
         await _showLocalNotification(title: title, body: body);
 
         if (!notifDoc.exists) {
@@ -113,7 +114,7 @@ class NotificationService {
     }
   }
 
-  /// Triggered when a document is shared with another user
+  /// Notify recipient user when a document is shared with them
   static Future<void> notifyDocumentShared({
     required String sharedWithUid,
     required String documentName,
@@ -136,7 +137,7 @@ class NotificationService {
       final existing = await notifRef.get();
 
       if (!existing.exists) {
-        print('📬 Creating notification for $sharedWithUid: $documentName');
+        debugPrint('📬 Creating notification for $sharedWithUid: $documentName');
         await notifRef.set({
           'title': title,
           'body': body,
@@ -148,10 +149,10 @@ class NotificationService {
 
         await _showLocalNotification(title: title, body: body);
       } else {
-        print('ℹ️ Notification already exists for $sharedWithUid and $documentName');
+        debugPrint('ℹ️ Notification already exists for $sharedWithUid and $documentName');
       }
     } catch (e, st) {
-      print('❌ Failed to create shared notification: $e\n$st');
+      debugPrint('❌ Failed to create shared notification: $e\n$st');
     }
   }
 }
