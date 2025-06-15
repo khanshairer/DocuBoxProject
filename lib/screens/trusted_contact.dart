@@ -169,9 +169,22 @@ class _TrustedContactState extends State<TrustedContact> {
 
       // Add new and send notifications
       for (var userId in contactIds) {
+        // Add to current user's trustedContacts
         batch.set(contactsRef.doc(userId), {
           'addedAt': FieldValue.serverTimestamp(),
           'userId': userId,
+        });
+
+        // Add current user to contact's pplTrustU collection
+        final trustedByRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('pplTrustU')
+            .doc(widget.currentUserId);
+
+        batch.set(trustedByRef, {
+          'addedAt': FieldValue.serverTimestamp(),
+          'userId': widget.currentUserId,
         });
 
         // Get contact name for notification
