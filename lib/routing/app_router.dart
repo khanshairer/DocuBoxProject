@@ -107,6 +107,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               currentUserId: FirebaseAuth.instance.currentUser!.uid,
             ),
       ),
+      //for trusted contacts documents
+      GoRoute(
+        path: '/shared-document-view/:docId',
+        name: 'shared-document-view-by-id',
+        builder: (context, state) {
+          final docId = state.pathParameters['docId']!;
+          return SharedDocumentViewerPageById(documentId: docId);
+        },
+      ),
     ],
     redirect: (context, state) {
       final bool loggedIn = authNotifier.currentUser != null;
