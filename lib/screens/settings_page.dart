@@ -4,6 +4,9 @@ import '../providers/theme_settings_provider.dart';
 import '../providers/notification_settings_provider.dart';
 import '../services/user_service.dart';
 import 'package:go_router/go_router.dart';
+import '../services/backup_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -28,6 +31,35 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          ListTile(
+            leading: Icon(Icons.backup),
+            title: Text('Create Local Backup'),
+            onTap: () async {
+              final messenger = ScaffoldMessenger.of(context);  // capture context early
+              final userId = FirebaseAuth.instance.currentUser?.uid;
+
+              if (userId == null) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text('User not logged in.')),
+                );
+                return;
+              }
+
+              try {
+                await BackupService.performLocalEncryptedBackup(userId);
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Backup completed successfully.')),
+                );
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Backup failed: $e')),
+                );
+              }
+            },
+          ),
+
+
+
           // Theme Mode Toggle
           Card(
             margin: const EdgeInsets.only(bottom: 16.0),
