@@ -17,7 +17,10 @@ class SharedDocumentsPage extends ConsumerWidget {
     final user = authNotifier.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Shared Documents')),
+      appBar: AppBar(
+        title: const Text('Shared Documents'),
+        leading: const BackButton(),
+        ),
       // Only show drawer if user is logged in
       drawer: user != null ? HomePageMenuBar() : null,
       body: sharedDocumentsAsyncValue.when(

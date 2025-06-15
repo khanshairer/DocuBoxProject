@@ -44,3 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 pubspec.lock
+ios/Podfile
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+.gitignore
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/Flutter-Release.xcconfig
+macos/Podfile
+macos/Flutter/Flutter-Release.xcconfig

@@ -95,7 +95,7 @@ class HomePageMenuBar extends ConsumerWidget {
             onTap: () {
               if (context.mounted) {
                 Navigator.pop(context); // Close the drawer
-                context.go('/'); // Navigate to Home (root path)
+                context.push('/'); // Navigate to Home (root path)
               }
             },
           ),
@@ -112,7 +112,7 @@ class HomePageMenuBar extends ConsumerWidget {
             onTap: () {
               if (context.mounted) {
                 Navigator.pop(context); // Close the drawer
-                context.go('/document-upload');
+                context.push('/document-upload');
               }
             },
           ),
@@ -163,7 +163,7 @@ class HomePageMenuBar extends ConsumerWidget {
             onTap: () {
               if (context.mounted) {
                 Navigator.pop(context);
-                context.go('/shared-documents');
+                context.push('/shared-documents');
               }
             },
           ),
@@ -180,7 +180,7 @@ class HomePageMenuBar extends ConsumerWidget {
             onTap: () {
               if (context.mounted) {
                 Navigator.pop(context);
-                context.go('/profile');
+                context.push('/profile');
               }
             },
           ),
@@ -197,7 +197,7 @@ class HomePageMenuBar extends ConsumerWidget {
             onTap: () {
               if (context.mounted) {
                 Navigator.pop(context);
-                context.go('/settings');
+                context.push('/settings');
               }
             },
           ),
@@ -214,7 +214,7 @@ class HomePageMenuBar extends ConsumerWidget {
             onTap: () {
               if (context.mounted) {
                 Navigator.pop(context);
-                context.go('/chat');
+                context.push('/chat');
               }
             },
           ),

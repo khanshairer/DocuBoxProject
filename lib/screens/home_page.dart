@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:badges/badges.dart' as badges;
+
 import '../providers/auth_state_provider.dart';
 import '../widgets/homepage_menu_bar_widget.dart';
 import '../providers/documents_provider.dart';
@@ -8,6 +10,7 @@ import '../widgets/document_card.dart';
 import '../services/notification_service.dart';
 import '../services/user_service.dart';
 import '../providers/notification_settings_provider.dart';
+import '../providers/notification_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -27,7 +30,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     if (enabled) {
       NotificationService.checkAndNotifyExpiringDocuments();
     }
-    _setupNotifications(); // Call the notification setup here.
+    _setupNotifications();
   }
 
   @override
@@ -37,13 +40,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  // 3. Add the function to handle permission and token saving
   void _setupNotifications() async {
     final notificationService = NotificationService();
     await notificationService.requestPermission();
     final token = await notificationService.getToken();
-
-    // If a token is successfully retrieved, save it to the user's profile
     if (token != null) {
       await UserService.saveUserToken(token);
     }
@@ -59,7 +59,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     final user = authNotifier.currentUser;
     final documentsAsyncValue = ref.watch(filteredDocumentsProvider);
 
-    // Edited: Added a Scaffold and CircularProgressIndicator for null user
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -67,61 +66,70 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('DocuBox'),
-
         actions: [
-          IconButton(
-            onPressed: () {
-              context.push('/notifications');
+          Consumer(
+            builder: (context, ref, _) {
+              final countAsync = ref.watch(unreadNotificationsCountProvider);
+              return countAsync.when(
+                data: (count) {
+                  return IconButton(
+                    onPressed: () {
+                      context.push('/notifications');
+                    },
+                    icon: badges.Badge(
+                      showBadge: count > 0,
+                      badgeContent: Text(
+                        count.toString(),
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 10),
+                      ),
+                      child: const Icon(Icons.notifications_active),
+                    ),
+                  );
+                },
+                loading: () =>
+                    const Icon(Icons.notifications_active),
+                error: (_, __) =>
+                    const Icon(Icons.notifications_active),
+              );
             },
-            icon: const Icon(Icons.notifications_active),
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 10),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Search documents...',
-                // Edited: Added color to prefixIcon
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                suffixIcon:
-                    _searchController.text.isNotEmpty
-                        ? IconButton(
-                          // Edited: Added color to clear icon
-                          icon: const Icon(Icons.clear, color: Colors.white70),
-                          onPressed: () {
-                            _searchController.clear();
-                            ref.read(searchQueryProvider.notifier).state = '';
-                          },
-                        )
-                        : null,
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white70),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref.read(searchQueryProvider.notifier).state = '';
+                        },
+                      )
+                    : null,
                 filled: true,
-                // Added: fillColor for search bar
                 fillColor: Colors.white24,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 hintStyle: const TextStyle(color: Colors.white70),
                 labelStyle: const TextStyle(color: Colors.white),
               ),
-              // Kept: Original cursorColor as requested
               cursorColor: Colors.blue[900],
             ),
           ),
         ),
       ),
       drawer: const HomePageMenuBar(),
-      // Edited: Wrapped body content in documentsAsyncValue.when for data handling
       body: documentsAsyncValue.when(
         data: (documents) {
           if (documents.isEmpty && _searchController.text.isEmpty) {
@@ -146,9 +154,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        // Edited: Changed context.go to _navigateToUpload method call for consistency
         onPressed: () {
-          context.go('/document-upload'); // Use the new method
+          context.push('/document-upload');
         },
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -182,16 +189,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 30),
-            // Added: ElevatedButton to the empty state for direct upload
             ElevatedButton.icon(
-              onPressed: () => context.go('/document-upload'),
+              onPressed: () => context.push('/document-upload'),
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload Document'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
