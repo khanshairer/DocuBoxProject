@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/document.dart';
 import 'share_settings_modal.dart';
 import '../screens/view_document_page.dart';
@@ -43,7 +44,7 @@ class DocumentCard extends StatelessWidget {
                   ),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert),
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       switch (value) {
                         case 'share':
                           showDialog(
@@ -59,6 +60,31 @@ class DocumentCard extends StatelessWidget {
                               builder: (context) => ViewDocumentPage(document: document),
                             ),
                           );
+                          break;
+                        case 'delete':
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete Document'),
+                              content: const Text('Are you sure you want to delete this document?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await FirebaseFirestore.instance
+                                .collection('documents')
+                                .doc(document.id)
+                                .delete();
+                          }
                           break;
                       }
                     },
@@ -83,6 +109,16 @@ class DocumentCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -103,9 +139,9 @@ class DocumentCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   color:
-                      document.expiryDate.isBefore(DateTime.now())
-                          ? Colors.red
-                          : Colors.green.shade700,
+                  document.expiryDate.isBefore(DateTime.now())
+                      ? Colors.red
+                      : Colors.green.shade700,
                   fontWeight: FontWeight.w500,
                 ),
               ),
