@@ -188,6 +188,10 @@ class _TrustedContactState extends State<TrustedContact> {
         title: const Text('Trusted Contacts'),
         actions: [
           IconButton(
+            onPressed: () => _showContactSelector(),
+            icon: Icon(Icons.add),
+          ),
+          IconButton(
             onPressed: () => context.go('/'),
             icon: const Icon(Icons.home),
           ),
