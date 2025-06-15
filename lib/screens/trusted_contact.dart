@@ -118,13 +118,27 @@ class _TrustedContactState extends State<TrustedContact> {
         _isLoading = true;
       });
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.currentUserId)
-          .collection('trustedContacts')
-          .doc(contactId)
-          .delete();
+      final batch = FirebaseFirestore.instance.batch();
 
+      // Remove from current user's trustedContacts
+      batch.delete(
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.currentUserId)
+            .collection('trustedContacts')
+            .doc(contactId),
+      );
+
+      // Remove current user from contact's pplTrustU
+      batch.delete(
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(contactId)
+            .collection('pplTrustU')
+            .doc(widget.currentUserId),
+      );
+
+      await batch.commit();
       await _loadTrustedContacts();
     } catch (e) {
       setState(() {
@@ -205,13 +219,9 @@ class _TrustedContactState extends State<TrustedContact> {
               children: [
                 const Text(
                   'My Trusted Contacts',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => _showContactSelector(),
-                  child: const Text('Manage Contacts'),
-                ),
               ],
             ),
           ),
