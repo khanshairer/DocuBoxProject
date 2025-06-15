@@ -133,6 +133,23 @@ class HomePageMenuBar extends ConsumerWidget {
               }
             },
           ),
+          //see trusted people documents
+          ListTile(
+            leading: Icon(
+              Icons.contacts,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'People Trust you',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+            onTap: () {
+              if (context.mounted) {
+                Navigator.pop(context); // Close the drawer
+                context.go('/trusted-documents');
+              }
+            },
+          ),
           // Shared Documents option
           ListTile(
             leading: Icon(
