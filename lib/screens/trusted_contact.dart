@@ -52,7 +52,7 @@ class _TrustedContactState extends State<TrustedContact> {
             'read': false,
           });
     } catch (e) {
-      debugPrint('Error sending notification: $e');
+      // error intentionally ignored
     }
   }
 
@@ -88,7 +88,6 @@ class _TrustedContactState extends State<TrustedContact> {
               'email': data?['email']?.toString() ?? 'No email',
             };
           } catch (e) {
-            debugPrint('Error loading user ${doc.id}: $e');
             return {
               'id': doc.id,
               'name': 'Error loading',
@@ -105,15 +104,12 @@ class _TrustedContactState extends State<TrustedContact> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load contacts: ${e.toString()}';
+        _errorMessage = 'Failed to load contacts';
       });
     }
   }
 
   Future<void> _deleteContact(String contactId) async {
-    if (!mounted) return;
-    final context = this.context;
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -147,18 +143,17 @@ class _TrustedContactState extends State<TrustedContact> {
 
       await batch.commit();
       await _loadTrustedContacts();
-      if (!mounted) return;
-      Navigator.pop(context);
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context);
-      debugPrint('Delete error: $e');
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to delete contact: ${e.toString()}';
-      });
 
       if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to delete contact';
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to delete contact. Please try again.'),
@@ -169,9 +164,6 @@ class _TrustedContactState extends State<TrustedContact> {
   }
 
   Future<void> _saveTrustedContacts(List<String> contactIds) async {
-    if (!mounted) return;
-    final context = this.context;
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -185,12 +177,10 @@ class _TrustedContactState extends State<TrustedContact> {
           .doc(widget.currentUserId)
           .collection('trustedContacts');
 
-      // Clear existing trusted contacts
       final existing = await contactsRef.get();
       for (var doc in existing.docs) {
         batch.delete(doc.reference);
 
-        // Also remove from their pplTrustU collection
         final pplTrustURef = FirebaseFirestore.instance
             .collection('users')
             .doc(doc.id)
@@ -199,17 +189,14 @@ class _TrustedContactState extends State<TrustedContact> {
         batch.delete(pplTrustURef);
       }
 
-      // Add new trusted contacts and update their pplTrustU collections
       for (var userId in contactIds) {
-        if (userId == widget.currentUserId) continue; // skip self
+        if (userId == widget.currentUserId) continue;
 
-        // Add to current user's trustedContacts
         batch.set(contactsRef.doc(userId), {
           'addedAt': FieldValue.serverTimestamp(),
           'userId': userId,
         });
 
-        // Add to other user's pplTrustU
         final trustedByRef = FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
@@ -221,7 +208,6 @@ class _TrustedContactState extends State<TrustedContact> {
           'userId': widget.currentUserId,
         });
 
-        // Fetch display name for notification
         final contactDoc =
             await FirebaseFirestore.instance
                 .collection('users')
@@ -240,18 +226,17 @@ class _TrustedContactState extends State<TrustedContact> {
 
       await batch.commit();
       await _loadTrustedContacts();
-      if (!mounted) return;
-      Navigator.pop(context); // close loading dialog
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context); // close loading dialog
-      debugPrint('Save error: $e');
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Failed to save contacts: ${e.toString()}';
-      });
 
       if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to save contacts';
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to save contacts. Please try again.'),
@@ -300,7 +285,7 @@ class _TrustedContactState extends State<TrustedContact> {
           ),
     );
 
-    if (selectedContacts != null && mounted) {
+    if (selectedContacts != null) {
       await _saveTrustedContacts(selectedContacts);
     }
   }
@@ -451,7 +436,7 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load users: ${e.toString()}';
+        _errorMessage = 'Failed to load users';
       });
     }
   }
@@ -471,8 +456,9 @@ class _ContactSelectorDialogState extends State<ContactSelectorDialog> {
   Widget _buildUserList() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_errorMessage != null) return Center(child: Text(_errorMessage!));
-    if (_filteredUsers.isEmpty)
+    if (_filteredUsers.isEmpty) {
       return const Center(child: Text('No users found'));
+    }
 
     return ListView.builder(
       shrinkWrap: true,

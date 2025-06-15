@@ -39,7 +39,9 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
             .where('shareWith', arrayContains: widget.currentUserId)
             .get();
 
-    setState(() => _userDocuments[userId] = docs.docs);
+    if (mounted) {
+      setState(() => _userDocuments[userId] = docs.docs);
+    }
   }
 
   String _getUserName(DocumentSnapshot userDoc) {
@@ -53,7 +55,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
     return data?['email']?.toString() ?? 'No email';
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -61,7 +63,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
           Icon(
             Icons.people_outline,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(128),
           ),
           const SizedBox(height: 16),
           Text(
@@ -78,7 +80,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
     );
   }
 
-  Widget _buildDocumentItem(DocumentSnapshot doc) {
+  Widget _buildDocumentItem(BuildContext context, DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ListTile(
       leading: _getDocumentIcon(data['type']),
@@ -89,7 +91,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
       ),
       trailing: IconButton(
         icon: const Icon(Icons.open_in_new),
-        onPressed: () => _openDocument(doc.id, data),
+        onPressed: () => _openDocument(context, doc.id, data),
       ),
     );
   }
@@ -107,7 +109,11 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
     }
   }
 
-  void _openDocument(String docId, Map<String, dynamic> data) {
+  void _openDocument(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
     context.push(
       '/shared-document-viewer',
       extra: {'documentId': docId, 'documentData': data},
@@ -126,7 +132,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(context);
           }
 
           final contacts = snapshot.data!.docs;
@@ -144,14 +150,16 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
                 child: ExpansionTile(
                   initiallyExpanded: _expandedUsers.contains(userId),
                   onExpansionChanged: (expanded) {
-                    setState(() {
-                      if (expanded) {
-                        _expandedUsers.add(userId);
-                        _fetchUserDocuments(userId);
-                      } else {
-                        _expandedUsers.remove(userId);
-                      }
-                    });
+                    if (mounted) {
+                      setState(() {
+                        if (expanded) {
+                          _expandedUsers.add(userId);
+                          _fetchUserDocuments(userId);
+                        } else {
+                          _expandedUsers.remove(userId);
+                        }
+                      });
+                    }
                   },
                   leading: CircleAvatar(child: Text(userName[0])),
                   title: Text(userName),
@@ -167,10 +175,11 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
                         padding: EdgeInsets.all(16.0),
                         child: Text('No documents shared by this contact'),
                       )
-                    else
-                      ..._userDocuments[userId]!
-                          .map(_buildDocumentItem)
-                          .toList(),
+                    else ...[
+                      ..._userDocuments[userId]!.map(
+                        (doc) => _buildDocumentItem(context, doc),
+                      ),
+                    ],
                   ],
                 ),
               );
