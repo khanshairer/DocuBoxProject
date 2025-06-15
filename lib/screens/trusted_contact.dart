@@ -1,4 +1,3 @@
-// ... imports remain unchanged
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
@@ -112,6 +111,9 @@ class _TrustedContactState extends State<TrustedContact> {
   }
 
   Future<void> _deleteContact(String contactId) async {
+    if (!mounted) return;
+    final context = this.context;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -136,13 +138,19 @@ class _TrustedContactState extends State<TrustedContact> {
       final trustedContactExists = (await trustedContactRef.get()).exists;
       final pplTrustUExists = (await pplTrustURef.get()).exists;
 
-      if (trustedContactExists) batch.delete(trustedContactRef);
-      if (pplTrustUExists) batch.delete(pplTrustURef);
+      if (trustedContactExists) {
+        batch.delete(trustedContactRef);
+      }
+      if (pplTrustUExists) {
+        batch.delete(pplTrustURef);
+      }
 
       await batch.commit();
       await _loadTrustedContacts();
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
+      if (!mounted) return;
       Navigator.pop(context);
       debugPrint('Delete error: $e');
       setState(() {
@@ -150,6 +158,7 @@ class _TrustedContactState extends State<TrustedContact> {
         _errorMessage = 'Failed to delete contact: ${e.toString()}';
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to delete contact. Please try again.'),
@@ -160,6 +169,9 @@ class _TrustedContactState extends State<TrustedContact> {
   }
 
   Future<void> _saveTrustedContacts(List<String> contactIds) async {
+    if (!mounted) return;
+    final context = this.context;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -228,8 +240,10 @@ class _TrustedContactState extends State<TrustedContact> {
 
       await batch.commit();
       await _loadTrustedContacts();
+      if (!mounted) return;
       Navigator.pop(context); // close loading dialog
     } catch (e) {
+      if (!mounted) return;
       Navigator.pop(context); // close loading dialog
       debugPrint('Save error: $e');
       setState(() {
@@ -237,6 +251,7 @@ class _TrustedContactState extends State<TrustedContact> {
         _errorMessage = 'Failed to save contacts: ${e.toString()}';
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to save contacts. Please try again.'),
@@ -279,12 +294,13 @@ class _TrustedContactState extends State<TrustedContact> {
       builder:
           (context) => ContactSelectorDialog(
             currentUserId: widget.currentUserId,
-            initialSelection:
-                _trustedContacts.map((c) => c['id'] as String).toList(),
+            initialSelection: [
+              ..._trustedContacts.map((c) => c['id'] as String),
+            ],
           ),
     );
 
-    if (selectedContacts != null) {
+    if (selectedContacts != null && mounted) {
       await _saveTrustedContacts(selectedContacts);
     }
   }
