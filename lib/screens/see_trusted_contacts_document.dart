@@ -125,7 +125,7 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
     Map<String, dynamic> data,
   ) {
     context.push(
-      '/shared-document-viewer',
+      '/shared-document-view',
       extra: {'documentId': docId, 'documentData': data},
     );
   }
@@ -133,7 +133,15 @@ class _SeeTrustedDocumentsPageState extends State<SeeTrustedDocumentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trusted Contacts Documents')),
+      appBar: AppBar(
+        title: const Text('Trusted Documents'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home),
+            onPressed: () => context.go('/'),
+          ),
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _trustedContactsStream,
         builder: (context, snapshot) {

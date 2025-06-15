@@ -119,7 +119,7 @@ class HomePageMenuBar extends ConsumerWidget {
           //Trusted Contacts
           ListTile(
             leading: Icon(
-              Icons.contacts,
+              Icons.group_add,
               color: Theme.of(context).colorScheme.onSurface,
             ),
             title: Text(
@@ -136,7 +136,7 @@ class HomePageMenuBar extends ConsumerWidget {
           //see trusted people documents
           ListTile(
             leading: Icon(
-              Icons.contacts,
+              Icons.handshake,
               color: Theme.of(context).colorScheme.onSurface,
             ),
             title: Text(
